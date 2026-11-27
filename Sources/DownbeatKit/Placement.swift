@@ -170,16 +170,32 @@ extension LogicApp {
 
     /// Throws unless no region of the track touches these bars.
     /// `ignoring` is the start bar of a region that does not count.
-    private func requireFree(bars: Range<Int>, onTrack number: Int?, ignoring: Int? = nil) throws {
-        for region in try regionSummaries()
-        where region.trackNumber == number && (ignoring == nil || region.startBar != ignoring) {
-            guard let start = region.startBar, let end = region.endBar else {
-                throw DownbeatError("\(region.name) does not sit on bar lines, so free space cannot be checked.")
-            }
-            if start < bars.upperBound && bars.lowerBound < end {
-                throw DownbeatError("\(region.name) already covers bars \(start) to \(end) on \(region.track).")
+    func requireFree(bars: Range<Int>, onTrack number: Int?, ignoring: Int? = nil) throws {
+        for track in try tracks() where Self.trackParts(track.name).number == number {
+            for region in track.regions {
+                let name = Self.regionName(region.name ?? "")
+                guard let covered = region.help.flatMap(Self.coveredBars) else {
+                    throw DownbeatError("The position of \(name) cannot be read, so free space cannot be checked.")
+                }
+                if let ignoring, covered.lowerBound == ignoring { continue }
+                if covered.overlaps(bars) {
+                    throw DownbeatError("""
+                        \(name) already covers bars \(covered.lowerBound) to \(covered.upperBound) on \
+                        \(Self.trackParts(track.name).name).
+                        """)
+                }
             }
         }
+    }
+
+    /// Every bar a region touches, from its help text, also when it starts or ends inside a bar.
+    static func coveredBars(help: String) -> Range<Int>? {
+        let pattern = /starts at (\d+) bars?([^,]*?)\s+and ends at (\d+) bars?([^,]*),/
+        guard let match = help.firstMatch(of: pattern),
+              let start = Int(match.1), let end = Int(match.3) else { return nil }
+        // Beats, divisions or ticks after the end bar reach into that bar.
+        let upper = match.4.contains(where: \.isNumber) ? end + 1 : end
+        return start..<max(upper, start + 1)
     }
 
     /// Runs one undoable step, counting it if it changed anything, even when it then failed.

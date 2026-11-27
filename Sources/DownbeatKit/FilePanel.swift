@@ -40,6 +40,22 @@ struct FilePanel {
         try wait("the file name to be accepted") { field.string(kAXValueAttribute) == name ? true : nil }
     }
 
+    /// Sets the pop-up menu that offers `title` and one of `others`.
+    func requirePopUp(_ title: String, among others: [String]) throws {
+        let popUp = window.first { element in
+            element.role == kAXPopUpButtonRole
+                && ([title] + others).contains(element.string(kAXValueAttribute) ?? "")
+        }
+        guard let popUp else { throw DownbeatError("The \(title) setting was not found in the panel.") }
+        if popUp.string(kAXValueAttribute) == title { return }
+        try popUp.perform(kAXPressAction)
+        let item = try wait("the \(title) menu item", seconds: 3) {
+            popUp.first(maxDepth: 3) { $0.role == kAXMenuItemRole && $0.title == title }
+        }
+        try item.perform(kAXPickAction)
+        try wait("\(title) to be chosen") { popUp.string(kAXValueAttribute) == title ? true : nil }
+    }
+
     func confirm() throws {
         let button = try wait("the confirm button to be enabled") {
             window.first { $0.identifier == "OKButton" && $0.bool(kAXEnabledAttribute) != false }

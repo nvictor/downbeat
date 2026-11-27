@@ -62,3 +62,17 @@ func readsFaderLevels(text: String, level: Double) {
     #expect(throws: DownbeatError.self) { try LogicApp.match("Compressor", in: plugins) }
     #expect(throws: DownbeatError.self) { try LogicApp.match("Reverb", in: plugins) }
 }
+
+@Test func coversTheBarsAnAudioRegionTouches() {
+    let inside = "Region starts at 5 bars  and ends at 6 bars 2 beats 4 divisions , Audio region."
+    #expect(LogicApp.coveredBars(help: inside) == 5..<7)
+    let onLines = "Region starts at 1 bar  and ends at 3 bars , MIDI region."
+    #expect(LogicApp.coveredBars(help: onLines) == 1..<3)
+    let late = "Region starts at 2 bars 3 beats  and ends at 4 bars , Audio region."
+    #expect(LogicApp.coveredBars(help: late) == 2..<4)
+}
+
+@Test(arguments: [(5.0, 120.0, "4/4", 3), (2.0, 120.0, "4/4", 1), (3.0, 60.0, "6/8", 1), (3.1, 60.0, "6/8", 2)])
+func countsTheBarsOfAnAudioFile(seconds: Double, tempo: Double, signature: String, bars: Int) {
+    #expect(LogicApp.bars(covering: seconds, tempo: tempo, signature: signature) == bars)
+}

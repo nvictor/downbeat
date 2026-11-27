@@ -9,7 +9,7 @@ struct Downbeat: ParsableCommand {
         subcommands: [
             Check.self, Inspect.self, StatusCommand.self, Project.self, Tempo.self,
             TrackCommands.self, Region.self, NoteCommands.self, MIDICommands.self, MixerCommands.self,
-            MarkerCommands.self, PluginCommands.self,
+            MarkerCommands.self, PluginCommands.self, AudioCommands.self,
             Play.self, Stop.self, Record.self,
         ]
     )

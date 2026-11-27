@@ -31,6 +31,8 @@ downbeat plugin add <track> <plugin> [--format f] --project <name>
 downbeat plugin remove <track> <plugin> --project <name>
 downbeat plugin bypass <track> <plugin> [--off] --project <name>
 downbeat midi ports [--json]
+downbeat audio import <file> --track t --bar n --project <name>
+downbeat audio export --track t --output <file.wav>
 downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks
 downbeat region list [--track t] [--json]
 downbeat region create --track t --bar n [--bars 1] [--name n] --project <name>

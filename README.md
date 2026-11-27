@@ -116,6 +116,16 @@ downbeat region move --region "Chorus" --bar 9 --to-bar 17 --project "Night Driv
 downbeat midi ports
 ```
 
+## Audio files
+
+```bash
+downbeat audio import take.wav --track "Vocals" --bar 5 --project "Night Drive"
+```
+
+```bash
+downbeat audio export --track "Vocals" --output vocals.wav
+```
+
 ## Edit notes
 
 ```bash

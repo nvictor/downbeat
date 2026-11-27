@@ -126,6 +126,15 @@ extension LogicApp {
         }
     }
 
+    /// Throws unless the selected track records audio: only its strip has input monitoring.
+    func requireAudioStrip(named name: String) throws {
+        try showInspector()
+        let strip = try wait("the channel strip of \(name)", seconds: 3) { channelStrip(named: name) }
+        guard strip.children.contains(where: { $0.string(kAXDescriptionAttribute) == "monitoring" }) else {
+            throw DownbeatError("\(name) is not an audio track.")
+        }
+    }
+
     /// The inspector's channel strip with this name.
     func channelStrip(named name: String) -> AXElement? {
         projectWindow?.element.first {

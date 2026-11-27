@@ -127,6 +127,19 @@ Neither command is tested with automation.
 - Seen once: the instrument slot was named `input` and its checkbox kept a stale state, while the Mixer was right. It went back to normal after effects were removed. downbeat reports the bypass as unknown and refuses to change it.
 - Not tested: MIDI effects, aux and output channels, third-party plugins.
 
+## Audio files
+
+`downbeat audio import` selects an audio track, moves the playhead and uses `File > Import > Audio File…`.
+
+- Refused on other track types, and when a region already touches the bars the file would cover. Those bars are estimated from the tempo and meter at the start bar.
+
+`downbeat audio export` uses `File > Export > 1 Track as Audio File…` into an empty folder, then moves the file to the output.
+
+- Sets the file type to WAVE. Bit depth, range, normalize, effects bypass and volume/pan automation stay as Logic Pro last used them.
+- The file starts at the project start, so positions line up. Seen with `Trim Silence at File End`.
+- A muted track still exports its audio.
+- Tested with a mono tone on an audio track, and a software instrument track. Other file formats and sample rates were not tested.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
