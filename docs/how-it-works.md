@@ -87,14 +87,18 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - A copy keeps the name, so pick one of them with `--bar` afterwards.
 - Move tested: forward, backward and onto its own old bars.
 
-## Volume
+## Volume and pan
 
 `downbeat mixer volume` steps the fader in the track header until its level is closest to the one asked, then prints the level reached.
 
 - The track does not need to be selected or on screen.
 - Tested from -∞ to +6 dB. Every level tried was reached exactly.
 - Needs the volume slider shown in the track header.
-- Not tested with volume automation.
+- External MIDI tracks are refused: their volume is not in dB.
+
+`downbeat mixer pan` steps the pan knob of the track header, from -64 to 63. Tested at both ends, the middle and between, on audio, software instrument and external MIDI tracks.
+
+Neither command is tested with automation.
 
 ## What survives a region edit
 

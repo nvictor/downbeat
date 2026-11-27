@@ -8,7 +8,18 @@ public struct TrackVolume: Codable, Sendable, Equatable {
     public let level: String
 }
 
+public struct TrackPan: Codable, Sendable, Equatable {
+    public let track: String
+    public let number: Int?
+    /// -64 (left) to 63 (right), 0 in the middle.
+    public let pan: Int
+}
+
 extension LogicApp {
+    public static let panRange = -64...63
+    /// The top step of an audio fader. External MIDI tracks have a 0 to 127 volume instead.
+    private static let faderSteps = 233
+
     /// The loudest level of a Logic Pro fader.
     public static let maximumVolume = 6.0
 
@@ -20,6 +31,9 @@ extension LogicApp {
             $0.role == kAXSliderRole && $0.string(kAXDescriptionAttribute) == "Volume"
         }), let top = slider.value(kAXMaxValueAttribute), let bottom = slider.value(kAXMinValueAttribute) else {
             throw DownbeatError("The volume fader of \(track.name) was not found. Show it in the track header.")
+        }
+        guard slider.string(kAXMaxValueAttribute) == String(Self.faderSteps) else {
+            throw DownbeatError("\(track.name) has no fader in dB. External MIDI tracks are not supported.")
         }
         func read() throws -> (step: String, level: Double, text: String) {
             guard let step = slider.string(kAXValueAttribute),
@@ -49,6 +63,37 @@ extension LogicApp {
             }
         }
         return TrackVolume(track: track.name, number: track.number, level: try read().text)
+    }
+
+    /// Sets the pan knob of a track header.
+    public func setPan(_ pan: Int, track reference: String) throws -> TrackPan {
+        guard Self.panRange.contains(pan) else { throw DownbeatError("The pan must be -64 to 63.") }
+        let (track, header) = try find(reference)
+        // The knob has no description; only its value text names it.
+        guard let slider = header.children.first(where: {
+            $0.role == kAXSliderRole && $0.string(kAXValueDescriptionAttribute)?.hasSuffix("Pan") == true
+        }) else {
+            throw DownbeatError("The pan knob of \(track.name) was not found. Show it in the track header.")
+        }
+        // The knob counts from 0, with the middle at 64.
+        let target = pan - Self.panRange.lowerBound
+        func current() throws -> Int {
+            guard let value = slider.string(kAXValueAttribute).flatMap(Int.init) else {
+                throw DownbeatError("The pan of \(track.name) could not be read.")
+            }
+            return value
+        }
+        // The knob moves one step per write.
+        for _ in 0..<Self.panRange.count {
+            let before = try current()
+            if before == target { break }
+            try slider.set(kAXValueAttribute, to: target as CFNumber)
+            try wait("the pan knob to move", seconds: 2) { try current() != before ? true : nil }
+        }
+        guard try current() == target else {
+            throw DownbeatError("Could not set the pan of \(track.name) to \(pan).")
+        }
+        return TrackPan(track: track.name, number: track.number, pan: pan)
     }
 
     /// Reads a level such as `+0.0 dB`, `-6.2 dB` or `-∞ dB`.

@@ -6,7 +6,6 @@ Names can change.
 
 ### Needs experiments
 
-- [ ] `downbeat mixer pan "Lead Guitar" 20`
 - [ ] `downbeat marker create "Intro" --bar 1`
 - [ ] `downbeat midi ports`
 
