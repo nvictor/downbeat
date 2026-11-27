@@ -117,11 +117,7 @@ extension LogicApp {
     /// a software instrument has a MIDI plug-in slot, an external MIDI track has assign knobs.
     func requireMIDIStrip(named name: String) throws {
         try showInspector()
-        let strip = try wait("the channel strip of \(name)", seconds: 3) {
-            projectWindow?.element.first {
-                $0.role == "AXLayoutArea" && $0.string(kAXDescriptionAttribute) == "Mixer"
-            }?.children.first { $0.string(kAXDescriptionAttribute) == name }
-        }
+        let strip = try wait("the channel strip of \(name)", seconds: 3) { channelStrip(named: name) }
         let takesMIDI = strip.first(maxDepth: 3) {
             ["MIDI plug-in", "midi assign knob"].contains($0.string(kAXDescriptionAttribute))
         }
@@ -130,7 +126,14 @@ extension LogicApp {
         }
     }
 
-    private func showInspector() throws {
+    /// The inspector's channel strip with this name.
+    func channelStrip(named name: String) -> AXElement? {
+        projectWindow?.element.first {
+            $0.role == "AXLayoutArea" && $0.string(kAXDescriptionAttribute) == "Mixer"
+        }?.children.first { $0.string(kAXDescriptionAttribute) == name }
+    }
+
+    func showInspector() throws {
         guard let window = projectWindow?.element else { throw DownbeatError("Open a project.") }
         let toggle = window.first { $0.identifier == "controlBar/inspectorButton" }
         if let toggle, toggle.string(kAXValueAttribute) == "0" { try toggle.perform(kAXPressAction) }

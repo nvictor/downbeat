@@ -113,6 +113,15 @@ Neither command is tested with automation.
 
 `downbeat midi ports` lists the CoreMIDI sources and destinations of the Mac. It does not use Logic Pro or need permissions. Tested with the two Logic Pro virtual ports only: no hardware, and no offline device.
 
+## Plugins
+
+`downbeat plugin list` selects the track, reads the channel strip in the inspector, then restores the selection. `downbeat plugin bypass` presses the bypass checkbox of a slot.
+
+- The instrument is listed with the effects. In the test it came after them.
+- Pick a plugin by name or number. Use the number when two share a name.
+- Tested on software instrument tracks. The result was checked in the Mixer.
+- Not tested: effects on audio tracks, MIDI effects, aux and output channels.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

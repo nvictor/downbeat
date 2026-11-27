@@ -2,6 +2,5 @@
 
 ## Later
 
-- [ ] `--version`
-- [ ] Plugin management
+- [ ] Plugin add and remove
 - [ ] Audio editing

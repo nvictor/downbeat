@@ -3,6 +3,7 @@
 ## Implemented
 
 ```
+downbeat --version
 downbeat check [--json]
 downbeat inspect [--menus] [--json]
 downbeat status [--json]
@@ -25,6 +26,8 @@ downbeat track solo <track> [--off] --project <name>
 downbeat mixer volume <track> --db n --project <name>           # up to +6, or -inf
 downbeat mixer pan <track> --value n --project <name>           # -64 to 63
 downbeat marker create <name> --bar n --project <name>
+downbeat plugin list <track> [--json]
+downbeat plugin bypass <track> <plugin> [--off] --project <name>
 downbeat midi ports [--json]
 downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks
 downbeat region list [--track t] [--json]

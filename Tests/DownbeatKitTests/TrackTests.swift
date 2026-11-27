@@ -50,3 +50,15 @@ func readsFaderLevels(text: String, level: Double) {
     #expect(try #require(LogicApp.markerPosition("5 2 1 1 ")) == (5, false))
     #expect(LogicApp.markerPosition("∞") == nil)
 }
+
+@Test func matchesPluginsByNameOrNumber() throws {
+    let plugins = [
+        Plugin(number: 1, name: "Compressor", bypassed: false),
+        Plugin(number: 2, name: "Channel EQ", bypassed: false),
+        Plugin(number: 3, name: "Compressor", bypassed: true),
+    ]
+    #expect(try LogicApp.match("channel eq", in: plugins).number == 2)
+    #expect(try LogicApp.match("3", in: plugins).number == 3)
+    #expect(throws: DownbeatError.self) { try LogicApp.match("Compressor", in: plugins) }
+    #expect(throws: DownbeatError.self) { try LogicApp.match("Reverb", in: plugins) }
+}

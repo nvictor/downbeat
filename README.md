@@ -1,6 +1,6 @@
 # downbeat
 
-A command line tool for Logic Pro: start projects, control playback, manage tracks, volume and pan, and edit MIDI notes.
+A command line tool for Logic Pro: start projects, control playback, manage tracks, volume, pan and plugin bypass, and edit MIDI notes.
 
 Needs macOS 15+, Logic Pro (English), and Accessibility and Automation permissions.
 
@@ -56,6 +56,14 @@ downbeat mixer pan "Bass" --value -20 --project "Night Drive"
 
 ```bash
 downbeat marker create "Chorus" --bar 9 --project "Night Drive"
+```
+
+```bash
+downbeat plugin list "Bass"
+```
+
+```bash
+downbeat plugin bypass "Bass" "Compressor" --project "Night Drive"
 ```
 
 ## Play and save
