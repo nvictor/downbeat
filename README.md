@@ -1,6 +1,6 @@
 # logic-cli
 
-Edit MIDI regions in Logic Pro from the command line.
+Start Logic Pro projects and edit MIDI regions from the command line.
 
 Needs macOS 15+, Logic Pro (English), and Accessibility and Automation permissions.
 
@@ -12,6 +12,20 @@ swift build -c release
 
 ```bash
 install -m 755 .build/release/logic ~/.local/bin/logic
+```
+
+## Start a project
+
+Once: save an empty project in Logic Pro, then keep it as the template.
+
+```bash
+logic project template ~/Music/Logic/Blank.logicx
+```
+
+Then:
+
+```bash
+logic project new "Night Drive" --tempo 92 --signature 6/8 --key "A minor"
 ```
 
 ## Use

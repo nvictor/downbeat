@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import LogicKit
 
@@ -61,4 +62,48 @@ func reportsASetting(prefix: String, control: InspectorControl) {
     #expect(region.matches(RegionReference(name: "Verse", track: "2", bar: 3)))
     #expect(region.matches(RegionReference(name: nil, track: "Lead Guitar", bar: nil)))
     #expect(!region.matches(RegionReference(name: "Verse", track: nil, bar: 7)))
+}
+
+@Test(arguments: [("a minor", "A Minor"), ("F# minor", "F♯ Minor"), ("Bb major", "B♭ Major"), ("b MAJOR", "B Major")])
+func spellsKeysLikeTheMenu(input: String, title: String) throws {
+    #expect(try ProjectSettings.keyTitle(input) == title)
+}
+
+@Test(arguments: ["A", "H minor", "G# major", "A dorian", ""])
+func refusesUnknownKeys(input: String) {
+    #expect(throws: LogicError.self) { try ProjectSettings.keyTitle(input) }
+}
+
+@Test func checksTempoAndSignature() {
+    #expect(throws: LogicError.self) { try ProjectSettings.checkTempo(4) }
+    #expect(throws: LogicError.self) { try ProjectSettings.checkSignature("9/16") }
+}
+
+@Test func copiesAProjectWithoutLeftovers() throws {
+    let files = FileManager.default
+    let root = files.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? files.removeItem(at: root) }
+    let source = root.appendingPathComponent("Source.logicx")
+    for path in ["Alternatives/000/Autosave", "Alternatives/000/Undo Data.nosync", "Resources"] {
+        try files.createDirectory(at: source.appendingPathComponent(path), withIntermediateDirectories: true)
+    }
+    let copy = root.appendingPathComponent("New/Copy.logicx")
+    try NewProject.copyProject(source, to: copy)
+    #expect(try files.contentsOfDirectory(atPath: copy.appendingPathComponent("Alternatives/000").path) == [])
+    #expect(files.fileExists(atPath: copy.appendingPathComponent("Resources").path))
+    #expect(throws: LogicError.self) { try NewProject.copyProject(source, to: copy) }
+}
+
+@Test func comparesSettingsWithProjectMetadata() throws {
+    var project = NewProject(
+        destination: URL(fileURLWithPath: "/tmp/a.logicx"), template: URL(fileURLWithPath: "/tmp/b.logicx"),
+        tempo: 92, signature: "6/8", key: try ProjectSettings.keyTitle("f# minor")
+    )
+    let stored: [String: Any] = [
+        "BeatsPerMinute": 92, "SongSignatureNumerator": 6, "SongSignatureDenominator": 8,
+        "SongKey": "F#", "SongGenderKey": "minor",
+    ]
+    #expect(project.matches(stored))
+    project.key = "D Minor"
+    #expect(!project.matches(stored))
 }

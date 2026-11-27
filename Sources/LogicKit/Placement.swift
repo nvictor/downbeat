@@ -206,7 +206,7 @@ extension LogicApp {
     }
 
     /// The control bar sliders move one step per write.
-    private func movePlayhead(toBar bar: Int) throws {
+    func movePlayhead(toBar bar: Int) throws {
         for (name, target) in [("beat", 1), ("bar", bar)] {
             guard let slider = projectWindow?.element.first(where: {
                 $0.role == kAXSliderRole && $0.string(kAXDescriptionAttribute) == name

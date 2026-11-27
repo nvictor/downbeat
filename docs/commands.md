@@ -5,6 +5,11 @@
 ```
 logic check [--json]
 logic inspect [--menus] [--json]
+logic status [--json]
+logic project new <name> [--tempo n] [--signature 6/8] [--key "A minor"] [--directory d] [--template t]
+logic project template <path.logicx> [--replace]
+logic tempo get
+logic tempo set <n> --project <name>
 logic region list [--track t] [--json]
 logic region export <region> --output <file.mid>
 logic region import <file.mid> <region> --project <name>     # replaces the region
@@ -30,16 +35,11 @@ logic midi ports
 logic play
 logic stop
 logic record
-logic status --json
 
 # project
 logic project open <path.logicx>
 logic project save
 logic project info
-
-# tempo
-logic tempo get
-logic tempo set 120
 
 # tracks
 logic track list [--json]

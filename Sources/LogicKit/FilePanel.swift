@@ -1,11 +1,6 @@
 import AppKit
 import ApplicationServices
 
-private enum Key {
-    static let g = 5
-    static let returnKey = 36
-}
-
 /// A standard open or save panel owned by Logic Pro.
 struct FilePanel {
     let app: LogicApp
@@ -28,14 +23,14 @@ struct FilePanel {
     func goTo(_ path: String) throws {
         // The panel drops keys sent while it is still appearing.
         Thread.sleep(forTimeInterval: 1)
-        try post(Key.g, using: ["command down", "shift down"])
+        try app.sendKey(Key.g, using: ["command down", "shift down"])
         let sheet = try wait("the Go to Folder sheet") { goToSheet }
         let field = try wait("the path field") { sheet.first { $0.identifier == "PathTextField" } }
         try field.set(kAXValueAttribute, to: path as CFString)
         try wait("the path to be accepted") { field.string(kAXValueAttribute) == path ? true : nil }
         // The completion list updates after the value, so give it a moment.
         Thread.sleep(forTimeInterval: 0.4)
-        try post(Key.returnKey)
+        try app.sendKey(Key.returnKey)
         try wait("the Go to Folder sheet to close") { goToSheet == nil ? true : nil }
     }
 
@@ -62,27 +57,5 @@ struct FilePanel {
 
     private var goToSheet: AXElement? {
         window.children.first { $0.identifier == "GoToWindow" }
-    }
-
-    /// Sends a key to the front application, only while that is Logic Pro.
-    /// Goes through System Events, which needs Automation permission.
-    private func post(_ key: Int, using modifiers: [String] = []) throws {
-        try app.activate()
-        let using = modifiers.isEmpty ? "" : " using {\(modifiers.joined(separator: ", "))}"
-        // The front check runs in the same script as the key, so a key never lands in another app.
-        let script = NSAppleScript(source: """
-            tell application "System Events"
-                set frontID to bundle identifier of (first process whose frontmost is true)
-                if frontID is not "\(LogicApp.bundleIdentifier)" then
-                    error "Logic Pro is not in front. Keep hands off keyboard and mouse."
-                end if
-                key code \(key)\(using)
-            end tell
-            """)
-        var failure: NSDictionary?
-        script?.executeAndReturnError(&failure)
-        if let failure {
-            throw LogicError("Could not send a key: \(failure[NSAppleScript.errorMessage] ?? failure)")
-        }
     }
 }
