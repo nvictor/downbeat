@@ -120,7 +120,7 @@ extension LogicApp {
         }
     }
 
-    private func find(_ reference: String) throws -> (TrackSummary, AXElement) {
+    func find(_ reference: String) throws -> (TrackSummary, AXElement) {
         guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let track = try Self.match(reference, in: trackSummaries())
         guard let header = try trackHeaders().first(where: { Self.summary($0) == track }) else {

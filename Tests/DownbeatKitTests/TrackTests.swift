@@ -38,3 +38,8 @@ func ignoresTheStateAfterATrackName(description: String) {
     #expect(parts.number == 2)
     #expect(parts.name == "Bass")
 }
+
+@Test(arguments: [("+0.0 dB", 0.0), ("-6.2 dB", -6.2), ("+6.0 dB", 6.0), ("-∞ dB", -Double.infinity)])
+func readsFaderLevels(text: String, level: Double) {
+    #expect(LogicApp.decibels(text) == level)
+}

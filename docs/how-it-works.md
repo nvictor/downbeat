@@ -87,6 +87,15 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - A copy keeps the name, so pick one of them with `--bar` afterwards.
 - Move tested: forward, backward and onto its own old bars.
 
+## Volume
+
+`downbeat mixer volume` steps the fader in the track header until its level is closest to the one asked, then prints the level reached.
+
+- The track does not need to be selected or on screen.
+- Tested from -∞ to +6 dB. Every level tried was reached exactly.
+- Needs the volume slider shown in the track header.
+- Not tested with volume automation.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

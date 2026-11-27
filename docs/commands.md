@@ -22,6 +22,7 @@ downbeat track rename <track> <new name> --project <name>
 downbeat track select <track> --project <name>
 downbeat track mute <track> [--off] --project <name>
 downbeat track solo <track> [--off] --project <name>
+downbeat mixer volume <track> --db n --project <name>           # up to +6, or -inf
 downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks
 downbeat region list [--track t] [--json]
 downbeat region create --track t --bar n [--bars 1] [--name n] --project <name>

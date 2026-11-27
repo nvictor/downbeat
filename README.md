@@ -1,6 +1,6 @@
 # downbeat
 
-A command line tool for Logic Pro: start projects, control playback, manage tracks and edit MIDI notes.
+A command line tool for Logic Pro: start projects, control playback, manage tracks and volume, and edit MIDI notes.
 
 Needs macOS 15+, Logic Pro (English), and Accessibility and Automation permissions.
 
@@ -44,6 +44,10 @@ downbeat track rename 1 "Drums" --project "Night Drive"
 
 ```bash
 downbeat track mute "Bass" --project "Night Drive"
+```
+
+```bash
+downbeat mixer volume "Bass" --db -6 --project "Night Drive"
 ```
 
 ## Play and save
