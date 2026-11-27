@@ -120,6 +120,20 @@ extension LogicApp {
         }
     }
 
+    /// Deletes the one region that matches.
+    public func deleteRegion(_ reference: RegionReference) throws -> Placement {
+        let placement = try select(reference)
+        // Delete acts on the focused pane, so focus the Tracks area first.
+        try select(track: placement.track)
+        try select(regionStartingAt: placement.startBar, on: placement.track)
+        let count = try regions(on: placement.track).count
+        try choose(["Edit", "Delete"])
+        try wait("the region to be deleted") {
+            try regions(on: placement.track).count == count - 1 ? true : nil
+        }
+        return placement
+    }
+
     /// Track names and region positions, without the selection.
     private func layout() throws -> [[String]] {
         try tracks().map { track in
@@ -162,10 +176,7 @@ extension LogicApp {
     private func select(track: String) throws {
         let header = try element(inGroup: "Tracks header", described: track)
         func isSelected() -> Bool { header.bool(kAXSelectedAttribute) == true }
-        // Accessibility reports success but changes nothing, so click the header.
-        try scrollIntoView(header)
-        guard let frame = header.frame else { throw DownbeatError("\(track) is not on screen.") }
-        try click(CGPoint(x: frame.minX + 12, y: frame.midY), on: header)
+        try click(header: header, of: track)
         try wait("\(track) to be selected") { isSelected() ? true : nil }
     }
 
@@ -191,8 +202,19 @@ extension LogicApp {
         }
     }
 
-    /// The control bar sliders move one step per write.
+    /// Moves the playhead to the first beat of a bar.
+    ///
+    /// Only bar and beat can be written, so go to the start first: playback leaves divisions
+    /// and ticks behind, which would place a paste or an import off the bar line.
     func movePlayhead(toBar bar: Int) throws {
+        let transport = try status()
+        guard !transport.playing, !transport.recording else {
+            throw DownbeatError("Logic Pro is playing. Run `downbeat stop` first.")
+        }
+        // While stopped, the stop button goes to the beginning.
+        try press("stopButton")
+        Thread.sleep(forTimeInterval: 0.3)
+        // The control bar sliders move one step per write.
         for (name, target) in [("beat", 1), ("bar", bar)] {
             guard let slider = projectWindow?.element.first(where: {
                 $0.role == kAXSliderRole && $0.string(kAXDescriptionAttribute) == name

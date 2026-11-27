@@ -50,17 +50,22 @@ extension LogicApp {
             return track.regions.map { region in
                 let bars = region.help.flatMap(Self.bars)
                 return RegionSummary(
-                    track: parts.name, trackNumber: parts.number, name: region.name ?? "",
+                    track: parts.name, trackNumber: parts.number, name: Self.regionName(region.name ?? ""),
                     startBar: bars?.start, endBar: bars?.end, selected: region.selected
                 )
             }
         }
     }
 
-    /// Splits a description such as `Track 2 “Bass”`.
+    /// Splits a description such as `Track 2 “Bass”`, which gains `, mute` or `, solo` when those are on.
     static func trackParts(_ description: String) -> (number: Int?, name: String) {
-        guard let match = description.wholeMatch(of: /Track (\d+) “(.*)”/) else { return (nil, description) }
+        guard let match = description.wholeMatch(of: /Track (\d+) “(.*)”(?:, [^“”]*)?/) else { return (nil, description) }
         return (Int(match.1), String(match.2))
+    }
+
+    /// Drops the `, muted` that follows a region name while its track is silenced.
+    static func regionName(_ description: String) -> String {
+        description.hasSuffix(", muted") ? String(description.dropLast(", muted".count)) : description
     }
 
     /// Makes the one region that matches the only selected region.
@@ -85,6 +90,16 @@ extension LogicApp {
         try activate()
         try select(regionStartingAt: bar, on: track.name)
         return try selectedPlacement()
+    }
+
+    /// Logic Pro cannot export a region silenced by a mute or a solo; it shows an alert instead.
+    public func requireAudibleSelection() throws {
+        let silenced = try tracks().flatMap(\.regions).contains {
+            $0.selected && $0.name?.hasSuffix(", muted") == true
+        }
+        if silenced {
+            throw DownbeatError("The region is silenced by a mute or a solo, so Logic Pro cannot export it.")
+        }
     }
 
     /// Tracks and regions as exposed by the arrange area. Off-screen items may be missing.

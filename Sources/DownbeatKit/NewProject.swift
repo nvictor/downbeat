@@ -47,27 +47,10 @@ public struct NewProject: Sendable {
         guard AXIsProcessTrusted() else {
             throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
         }
-        // Opening a project closes the current one, so never start with unsaved work.
-        if let running = try? LogicApp() {
-            guard running.dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
-            let unsaved = try LogicApp.unsavedDocuments()
-            guard unsaved.isEmpty else {
-                throw DownbeatError("Save or close \(unsaved.joined(separator: ", ")) first. Nothing was changed.")
-            }
-        }
-        guard let logic = NSWorkspace.shared.urlForApplication(withBundleIdentifier: LogicApp.bundleIdentifier) else {
-            throw DownbeatError("Logic Pro is not installed.")
-        }
+        // Checked before copying, so a refusal leaves no new project behind.
+        try LogicApp.requireNoUnsavedWork()
         try Self.copyProject(template, to: destination)
-        try open(destination, with: logic)
-
-        let expected = destination.resolvingSymlinksInPath().path
-        let app = try wait("Logic Pro to open \(destination.lastPathComponent)", seconds: 90) { () -> LogicApp? in
-            guard let app = try? LogicApp(), let path = app.projectWindow?.path,
-                  URL(fileURLWithPath: path).resolvingSymlinksInPath().path == expected,
-                  app.dialogs.isEmpty, (try? app.status().tempo) != nil else { return nil }
-            return app
-        }
+        let app = try LogicApp.open(project: destination)
         guard tempo != nil || signature != nil || key != nil else { return }
 
         try app.activate()
@@ -104,18 +87,75 @@ public struct NewProject: Sendable {
         }
         return true
     }
+}
 
-    private func open(_ project: URL, with application: URL) throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", application.path, project.path]
-        try process.run()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw DownbeatError("Could not open \(project.path).") }
-    }
+public struct ProjectInfo: Codable, Sendable {
+    public let name: String
+    public let path: String
+    /// True when any open project has unsaved changes.
+    public let modified: Bool
+    public let tempo: Double?
+    public let signature: String?
+    public let key: String?
+    public let tracks: Int
+    public let regions: Int
 }
 
 extension LogicApp {
+    /// Opening a project closes the current one, so never start with unsaved work.
+    static func requireNoUnsavedWork() throws {
+        guard let running = try? LogicApp() else { return }
+        guard running.dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
+        let unsaved = try unsavedDocuments()
+        guard unsaved.isEmpty else {
+            throw DownbeatError("Save or close \(unsaved.joined(separator: ", ")) first. Nothing was changed.")
+        }
+    }
+
+    /// Opens a project, starting Logic Pro if needed, and waits until it is ready.
+    @discardableResult
+    public static func open(project: URL) throws -> LogicApp {
+        guard AXIsProcessTrusted() else {
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
+        }
+        guard project.pathExtension == "logicx", FileManager.default.fileExists(atPath: project.path) else {
+            throw DownbeatError("\(project.path) is not a .logicx project.")
+        }
+        try requireNoUnsavedWork()
+        guard let logic = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
+            throw DownbeatError("Logic Pro is not installed.")
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-a", logic.path, project.path]
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw DownbeatError("Could not open \(project.path).") }
+
+        let expected = project.resolvingSymlinksInPath().path
+        return try wait("Logic Pro to open \(project.lastPathComponent)", seconds: 90) { () -> LogicApp? in
+            guard let app = try? LogicApp(), let path = app.projectWindow?.path,
+                  URL(fileURLWithPath: path).resolvingSymlinksInPath().path == expected,
+                  app.dialogs.isEmpty, (try? app.status().tempo) != nil else { return nil }
+            return app
+        }
+    }
+
+    public func saveProject() throws {
+        try save { true }
+    }
+
+    public func projectInfo() throws -> ProjectInfo {
+        let status = try status()
+        guard let path = status.project else { throw DownbeatError("Open a project.") }
+        return ProjectInfo(
+            name: Self.projectName(path: path), path: path,
+            modified: !(try Self.unsavedDocuments().isEmpty),
+            tempo: status.tempo, signature: status.signature, key: status.key,
+            tracks: try trackSummaries().count, regions: try regionSummaries().count
+        )
+    }
+
     /// Saves until the project stays saved. Logic Pro records some changes a moment after
     /// they show, which marks a freshly saved project as modified again.
     func save(until stored: () -> Bool) throws {

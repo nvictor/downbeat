@@ -11,7 +11,7 @@ A region is exported, edited as a MIDI file, and put back on the same track and 
 
 1. Read the selected region's track, start bar and end bar.
 2. Add a text event on the last tick of the file, to fix the region length.
-3. Move the playhead to the start bar.
+3. Move the playhead to the start bar, by way of the project start.
 4. `File > Import > MIDI File…`, decline the tempo if asked.
 5. Click the extra track's header, `Edit > Cut` the imported region.
 6. Click the original track's header, select the original region, `Edit > Delete`.
@@ -42,6 +42,15 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - Renaming double-clicks the name and writes into the editor. Nothing is typed, because keys outside an edit field act as Logic Pro key commands.
 - Off-screen tracks are scrolled into view before a rename.
 
+## Transport, mute and delete
+
+- `play`, `stop` and `record` press the control bar buttons. `stop` does nothing when already stopped, because the button would move the playhead.
+- Mute and Solo are clicked. Accessibility presses change nothing.
+- A solo hides mute states: `track list` does not report them, and `track mute` is refused.
+- `region delete` clicks the track header, selects the region, then uses `Edit > Delete`. The region must start and end on a bar line.
+- `midi import` keeps the project tempo and prints the tracks it added.
+- Tested live: all of the above. `record` was tested without MIDI input, so no recorded region was checked.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
@@ -63,6 +72,7 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
+| Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
 | 3/4 | Preserved. Other meters not tested. |
 | Several regions on a track | The other region is untouched (identical export). |
 
@@ -107,6 +117,8 @@ Without a fix the count grew on each pass: 215, 428, 854.
 | Some changes are recorded after they show, so a saved project turns modified again. | Save until it stays saved. |
 | The first click after coming to the front may only raise the window. | Wait before clicking. |
 | The track list has page actions that fail. | Scroll with the mouse wheel and wait for it to stop. |
+| Playback leaves divisions and ticks that cannot be written, so a paste lands off the bar line. | Press the stop button (go to beginning) before moving the playhead. |
+| Track and region descriptions gain `, mute`, `, solo` or `, muted`. | Ignore the suffix when reading names. |
 
 ## AudioToolbox
 

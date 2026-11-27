@@ -29,6 +29,21 @@ extension LogicApp {
         }
     }
 
+    /// Imports a file at a bar and returns the tracks it added.
+    public func importMIDI(from url: URL, atBar bar: Int) throws -> [TrackSummary] {
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
+        let count = try trackSummaries().count
+        try activate()
+        try movePlayhead(toBar: bar)
+        try importMIDI(from: url)
+        // Logic Pro selects what it imports; the new tracks are the ones past the old count.
+        let tracks = try trackSummaries()
+        let selected = try self.tracks().filter { $0.regions.contains(where: \.selected) }
+            .compactMap { Self.trackParts($0.name).number }
+        let added = tracks.filter { $0.number.map(selected.contains) == true }
+        return added.isEmpty ? Array(tracks.dropFirst(count)) : added
+    }
+
     /// Imports with File > Import > MIDI File, declining the file's tempo.
     /// Logic Pro puts the content on a new track.
     public func importMIDI(from url: URL) throws {

@@ -97,7 +97,7 @@ extension LogicApp {
         try control { $0.role == role && $0.string(kAXDescriptionAttribute) == description }
     }
 
-    private func control(_ matches: (AXElement) -> Bool) throws -> AXElement {
+    func control(_ matches: (AXElement) -> Bool) throws -> AXElement {
         guard let found = projectWindow?.element.first(where: matches) else {
             throw DownbeatError("A control bar item was not found. Show the control bar in Logic Pro.")
         }

@@ -4,8 +4,8 @@ import DownbeatKit
 
 struct Project: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Create projects.",
-        subcommands: [New.self, Template.self]
+        abstract: "Create, open, save and describe projects.",
+        subcommands: [New.self, Open.self, Save.self, Info.self, Template.self]
     )
 
     struct New: ParsableCommand {
@@ -59,6 +59,55 @@ struct Project: ParsableCommand {
                 tempo: tempo, signature: signature, key: key.map(ProjectSettings.keyTitle)
             ).create()
             print(destination.path)
+        }
+    }
+
+    struct Open: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Open a project. Refuses if an open project has unsaved changes."
+        )
+
+        @Argument(help: "A .logicx project.")
+        var path: String
+
+        func run() throws {
+            let url = fileURL(path)
+            try LogicApp.open(project: url)
+            print(url.path)
+        }
+    }
+
+    struct Save: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Save the project in front.")
+
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            try target.app().saveProject()
+            print("Saved.")
+        }
+    }
+
+    struct Info: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Describe the project in front.")
+
+        @Flag(help: "Print JSON.")
+        var json = false
+
+        func run() throws {
+            let info = try LogicApp().projectInfo()
+            if json {
+                try printJSON(info)
+                return
+            }
+            print("Name:     \(info.name)")
+            print("Path:     \(info.path)")
+            print("Modified: \(info.modified ? "yes" : "no")")
+            print("Tempo:    \(info.tempo.map { $0.formatted() } ?? "?")")
+            print("Meter:    \(info.signature ?? "?")")
+            print("Key:      \(info.key ?? "?")")
+            print("Tracks:   \(info.tracks)")
+            print("Regions:  \(info.regions)")
         }
     }
 

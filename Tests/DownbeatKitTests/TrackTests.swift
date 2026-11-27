@@ -26,3 +26,15 @@ func refusesBadTrackNames(name: String) {
 @Test func readsNamesThatContainQuotes() {
     #expect(LogicApp.trackParts("Track 2 “Bass “Low””").name == "Bass “Low”")
 }
+
+@Test func ignoresTheStateAfterARegionName() {
+    #expect(LogicApp.regionName("Verse, muted") == "Verse")
+    #expect(LogicApp.regionName("Verse, take 2") == "Verse, take 2")
+}
+
+@Test(arguments: ["Track 2 “Bass”, mute", "Track 2 “Bass”, solo", "Track 2 “Bass”, mute, solo"])
+func ignoresTheStateAfterATrackName(description: String) {
+    let parts = LogicApp.trackParts(description)
+    #expect(parts.number == 2)
+    #expect(parts.name == "Bass")
+}

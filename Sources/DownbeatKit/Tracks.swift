@@ -78,6 +78,60 @@ extension LogicApp {
         }
     }
 
+    /// Selects a track by clicking its header.
+    public func selectTrack(_ reference: String) throws -> TrackSummary {
+        let (track, header) = try find(reference)
+        try click(header: header, of: track.name)
+        return try wait("\(track.name) to be selected") {
+            try trackSummaries().first { $0.number == track.number && $0.selected }
+        }
+    }
+
+    public func setMute(_ on: Bool, track reference: String) throws -> TrackSummary {
+        // A solo hides the mute state, so the button cannot be trusted.
+        guard try !trackSummaries().contains(where: \.soloed) else {
+            throw DownbeatError("A track is soloed, which hides mute states. Turn solo off first.")
+        }
+        return try setButton("Mute", to: on, track: reference) { $0.muted }
+    }
+
+    public func setSolo(_ on: Bool, track reference: String) throws -> TrackSummary {
+        try setButton("Solo", to: on, track: reference) { $0.soloed }
+    }
+
+    private func setButton(
+        _ name: String, to on: Bool, track reference: String, state: (TrackSummary) -> Bool
+    ) throws -> TrackSummary {
+        let (track, header) = try find(reference)
+        if state(track) == on { return track }
+        guard let button = header.children.first(where: { $0.string(kAXDescriptionAttribute) == name }) else {
+            throw DownbeatError("The \(name) button of \(track.name) was not found.")
+        }
+        // Like the header, the button ignores accessibility presses, so click it.
+        try scrollIntoView(button)
+        guard let frame = button.frame else { throw DownbeatError("\(track.name) is not on screen.") }
+        try click(CGPoint(x: frame.midX, y: frame.midY), on: button)
+        return try wait("\(name) of \(track.name) to change") {
+            try trackSummaries().first { $0.number == track.number && state($0) == on }
+        }
+    }
+
+    private func find(_ reference: String) throws -> (TrackSummary, AXElement) {
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
+        let track = try Self.match(reference, in: trackSummaries())
+        guard let header = try trackHeaders().first(where: { Self.summary($0) == track }) else {
+            throw DownbeatError("The track \(reference) was not found.")
+        }
+        return (track, header)
+    }
+
+    /// Accessibility reports success but changes nothing, so click the header.
+    func click(header: AXElement, of track: String) throws {
+        try scrollIntoView(header)
+        guard let frame = header.frame else { throw DownbeatError("\(track) is not on screen.") }
+        try click(CGPoint(x: frame.minX + 12, y: frame.midY), on: header)
+    }
+
     /// Double-clicks a track name until its editor opens.
     ///
     /// Keys typed outside an edit field act as Logic Pro key commands, so nothing is typed:
@@ -110,7 +164,7 @@ extension LogicApp {
     }
 
     /// Scrolls the track list until `element` is inside its visible part.
-    func scrollIntoView(_ element: AXElement) throws {
+    private func scrollIntoView(_ element: AXElement) throws {
         var ancestor = element.element(kAXParentAttribute)
         while let current = ancestor, current.role != kAXScrollAreaRole {
             ancestor = current.element(kAXParentAttribute)

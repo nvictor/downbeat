@@ -4,8 +4,8 @@ import DownbeatKit
 
 struct Region: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "List, export and import MIDI regions.",
-        subcommands: [List.self, Export.self, Import.self]
+        abstract: "List, export, import and delete regions.",
+        subcommands: [List.self, Export.self, Import.self, Delete.self]
     )
 
     struct List: ParsableCommand {
@@ -30,6 +30,20 @@ struct Region: ParsableCommand {
                 let bars = region.startBar.flatMap { start in region.endBar.map { "bars \(start) to \($0)" } }
                 print("\(number)  \(region.track)  \(region.name)  \(bars ?? "off the bar lines")")
             }
+        }
+    }
+
+    struct Delete: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Delete a region. Does not save the project."
+        )
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            let removed = try target.app().deleteRegion(options.reference)
+            print("Deleted bars \(removed.startBar) to \(removed.endBar).")
         }
     }
 

@@ -6,8 +6,8 @@ extension TrackType: ExpressibleByArgument {}
 struct TrackCommands: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "track",
-        abstract: "List, create and rename tracks.",
-        subcommands: [List.self, Create.self, Rename.self]
+        abstract: "List, create, rename, select, mute and solo tracks.",
+        subcommands: [List.self, Create.self, Rename.self, Select.self, Mute.self, Solo.self]
     )
 
     struct List: ParsableCommand {
@@ -66,6 +66,58 @@ struct TrackCommands: ParsableCommand {
                 }
             }
             print("\(track.number.map(String.init) ?? "?")  \(track.name)")
+        }
+    }
+
+    struct Select: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Select a track.")
+
+        @Argument(help: "Name or number of the track.")
+        var track: String
+
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            let selected = try target.app().selectTrack(track)
+            print("\(selected.number.map(String.init) ?? "?")  \(selected.name)")
+        }
+    }
+
+    struct Mute: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Mute a track. Does not save the project."
+        )
+
+        @Argument(help: "Name or number of the track.")
+        var track: String
+
+        @Flag(help: "Unmute.")
+        var off = false
+
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            let changed = try target.app().setMute(!off, track: track)
+            print("\(changed.name)  \(changed.muted ? "muted" : "unmuted")")
+        }
+    }
+
+    struct Solo: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Solo a track. Does not save the project."
+        )
+
+        @Argument(help: "Name or number of the track.")
+        var track: String
+
+        @Flag(help: "Turn solo off.")
+        var off = false
+
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            let changed = try target.app().setSolo(!off, track: track)
+            print("\(changed.name)  solo \(changed.soloed ? "on" : "off")")
         }
     }
 

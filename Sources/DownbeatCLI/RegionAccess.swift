@@ -39,6 +39,7 @@ extension LogicApp {
     func exportRegion(_ reference: RegionReference, to url: URL) throws -> Placement {
         let placement = try select(reference)
         try requirePlainRegion()
+        try requireAudibleSelection()
         try exportSelection(to: url)
         let file = try MIDIFile(contentsOf: url)
         if try file.thinPitchBend() > 0 { try file.save(to: url) }

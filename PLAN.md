@@ -2,7 +2,6 @@
 
 ## Next
 
-- [ ] Try it on a copy of an `Atalanta` project
 - [ ] Search trademark databases for `downbeat` before promoting it
 
 ## Remaining commands
@@ -16,20 +15,6 @@ Names can change.
 - [ ] `downbeat note update --region "Intro" --id 12 --pitch D4`
 - [ ] `downbeat note export --region "Intro" > notes.json`
 - [ ] `downbeat note import --region "Intro" notes.json`
-
-### Quick wins
-
-- [ ] `downbeat play`
-- [ ] `downbeat stop`
-- [ ] `downbeat record`
-- [ ] `downbeat track select "Drums"`
-- [ ] `downbeat track mute "Bass"`
-- [ ] `downbeat track solo "Lead Guitar"`
-- [ ] `downbeat project open <path.logicx>`
-- [ ] `downbeat project save`
-- [ ] `downbeat project info`
-- [ ] `downbeat midi import drums.mid`
-- [ ] `downbeat region delete "Verse"`
 
 ### Needs experiments
 
