@@ -78,9 +78,13 @@ downbeat note list --track 1 --bar 3
 downbeat note transpose --track 1 --bar 3 --project MySong --semitones=-2
 ```
 
+```bash
+downbeat note add --track 1 --bar 3 --project MySong --pitch F#3 --beat 0 --duration 0.5
+```
+
 - Edits replace the region. `--project` must match the front project.
 - Keep hands off keyboard and mouse while a command runs.
-- Regions with Loop, playback settings or a custom color are refused.
+- Regions with Loop, playback settings, a custom color or several MIDI channels are refused.
 
 ## More
 

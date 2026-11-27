@@ -78,6 +78,32 @@ public final class MIDIFile {
         return result
     }
 
+    /// Adds one note. `beat` and `duration` are in quarter notes, `beat` from the start of the file.
+    /// Throws if it would overlap a note of the same pitch and channel.
+    public func addNote(pitch: Int, beat: Double, duration: Double, velocity: Int, channel: Int) throws {
+        guard (0...127).contains(pitch), beat >= 0, duration > 0,
+              (1...127).contains(velocity), (1...16).contains(channel) else {
+            throw LayoutError(description: "the note is out of range")
+        }
+        let overlaps = try notes().contains {
+            Int($0.pitch) == pitch && $0.channel == channel
+                && $0.beat < beat + duration - 1e-6 && beat < $0.beat + $0.duration - 1e-6
+        }
+        guard !overlaps else {
+            throw LayoutError(description: "the note overlaps another \(Pitch.name(pitch)) on channel \(channel)")
+        }
+        var count: UInt32 = 0
+        try check(MusicSequenceGetTrackCount(sequence, &count), "MusicSequenceGetTrackCount")
+        guard count > 0 else { throw LayoutError(description: "the MIDI file has no tracks") }
+        var track: MusicTrack?
+        try check(MusicSequenceGetIndTrack(sequence, 0, &track), "MusicSequenceGetIndTrack")
+        var message = MIDINoteMessage(
+            channel: UInt8(channel - 1), note: UInt8(pitch), velocity: UInt8(velocity),
+            releaseVelocity: 64, duration: Float32(duration)
+        )
+        try check(MusicTrackNewMIDINoteEvent(track!, beat, &message), "MusicTrackNewMIDINoteEvent")
+    }
+
     /// Shifts every note. Throws before changing anything if a pitch would leave 0...127.
     public func transpose(semitones: Int) throws {
         let outOfRange = try notes().contains { !(0...127).contains(Int($0.pitch) + semitones) }

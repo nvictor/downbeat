@@ -1,16 +1,11 @@
 # Plan
 
-## Next
-
-- [ ] Search trademark databases for `downbeat` before promoting it
-
 ## Remaining commands
 
 Names can change.
 
 ### Notes
 
-- [ ] `downbeat note add --region "Intro" --pitch C4 --beat 1 --duration 0.5 --velocity 100`
 - [ ] `downbeat note delete --region "Intro" --id 12`
 - [ ] `downbeat note update --region "Intro" --id 12 --pitch D4`
 - [ ] `downbeat note export --region "Intro" > notes.json`
@@ -30,9 +25,5 @@ Names can change.
 ## Later
 
 - [ ] `--version`
-- [ ] Homebrew distribution
-- [ ] GUS, MEL and HAL integration
-- [ ] Scripter bridge (virtual MIDI ports)
-- [ ] MCP adapter
 - [ ] Plugin management
 - [ ] Audio editing

@@ -7,7 +7,7 @@ struct NoteCommands: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "note",
         abstract: "Read and edit the notes of a region.",
-        subcommands: [List.self, Transpose.self, Velocity.self, Quantize.self]
+        subcommands: [List.self, Add.self, Transpose.self, Velocity.self, Quantize.self]
     )
 
     struct Listing: Encodable {
@@ -49,7 +49,7 @@ struct NoteCommands: ParsableCommand {
                     track: placement.track, startBar: placement.startBar, endBar: placement.endBar,
                     notes: notes.enumerated().map { index, note in
                         Listing.Entry(
-                            id: index + 1, pitch: Int(note.pitch), name: pitchName(Int(note.pitch)),
+                            id: index + 1, pitch: Int(note.pitch), name: Pitch.name(Int(note.pitch)),
                             beat: rounded(note.beat - origin), duration: rounded(note.duration),
                             velocity: Int(note.velocity), channel: note.channel
                         )
@@ -67,6 +67,57 @@ struct NoteCommands: ParsableCommand {
         }
 
         private func rounded(_ value: Double) -> Double { (value * 10_000).rounded() / 10_000 }
+    }
+
+    struct Add: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Add one note to a region, on the channel the region uses."
+        )
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        @Option(help: "Name or number, for example F#3 or 66. Middle C is C3.")
+        var pitch: String
+
+        @Option(help: "Start, in quarter notes from the start of the region, from 0.")
+        var beat: Double
+
+        @Option(help: "Length in quarter notes.")
+        var duration: Double
+
+        @Option(help: "1 to 127.")
+        var velocity = 100
+
+        func validate() throws {
+            _ = try number()
+            guard beat >= 0, beat.isFinite else { throw ValidationError("--beat must be 0 or more.") }
+            guard duration >= 0.01, duration.isFinite else {
+                throw ValidationError("--duration must be 0.01 or more.")
+            }
+            guard (1...127).contains(velocity) else { throw ValidationError("--velocity must be 1 to 127.") }
+        }
+
+        private func number() throws -> Int {
+            guard let number = Pitch.parse(pitch) else {
+                throw ValidationError("--pitch must be 0 to 127, or a name such as F#3.")
+            }
+            return number
+        }
+
+        func run() throws {
+            try edit(options, in: target) { file, bounds in
+                let length = bounds.end - bounds.start
+                guard beat + duration <= length + 1e-6 else {
+                    throw DownbeatError("The note must end by beat \(length.formatted()), the end of the region.")
+                }
+                try file.addNote(
+                    pitch: number(), beat: bounds.start + beat, duration: duration,
+                    velocity: velocity, channel: file.notes().first?.channel ?? 1
+                )
+                return 1
+            }
+        }
     }
 
     struct Transpose: ParsableCommand {
@@ -154,11 +205,6 @@ private func edit(
         }
         try file.save(to: edited)
         try app.importRegion(edited, at: placement)
-        print("Changed \(count) notes.")
+        print("Changed \(count) \(count == 1 ? "note" : "notes").")
     }
-}
-
-private func pitchName(_ pitch: Int) -> String {
-    let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    return "\(names[pitch % 12])\(pitch / 12 - 2)"
 }

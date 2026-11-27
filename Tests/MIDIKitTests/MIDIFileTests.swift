@@ -150,3 +150,37 @@ private func meaningful(_ smf: SMF) -> [SMFEvent] {
     #expect(after.allSatisfy { abs(($0.beat / 0.25).rounded() * 0.25 - $0.beat) < 1e-6 })
 }
 
+
+@Test func addNoteAddsOnlyThatNote() throws {
+    let (before, after) = try roundTrip {
+        try $0.addNote(pitch: 67, beat: 4, duration: 1, velocity: 90, channel: 2)
+    }
+    let changes = before.differences(from: after)
+    #expect(changes.removed.isEmpty)
+    #expect(Set(changes.added.map(\.tick)) == [1920, 2400])
+    #expect(changes.added.contains { $0.bytes == [0x91, 67, 90] })
+}
+
+@Test func addNoteRefusesAnOverlap() throws {
+    #expect(throws: LayoutError.self) {
+        _ = try roundTrip { try $0.addNote(pitch: 60, beat: 0.25, duration: 1, velocity: 90, channel: 2) }
+    }
+}
+
+@Test(arguments: [("C3", 60), ("f#3", 66), ("Bb2", 58), ("C-2", 0), ("G8", 127), ("64", 64)])
+func readsPitchNames(text: String, number: Int) {
+    #expect(Pitch.parse(text) == number)
+}
+
+@Test(arguments: ["H3", "C9", "G#8", "128", "C", ""])
+func refusesBadPitches(text: String) {
+    #expect(Pitch.parse(text) == nil)
+}
+
+@Test func listsTheChannelsInUse() throws {
+    #expect(try SMF(data: fixture()).channels == [2])
+    let (_, after) = try roundTrip {
+        try $0.addNote(pitch: 67, beat: 4, duration: 1, velocity: 90, channel: 3)
+    }
+    #expect(after.channels == [2, 3])
+}

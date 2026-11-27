@@ -72,6 +72,7 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
+| Several MIDI channels in one region | Can be read. Replacing is refused: Logic gives the imported region another color. |
 | Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
 | 3/4 | Preserved. Other meters not tested. |
 | Several regions on a track | The other region is untouched (identical export). |
@@ -118,6 +119,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
 | The first click after coming to the front may only raise the window. | Wait before clicking. |
 | The track list has page actions that fail. | Scroll with the mouse wheel and wait for it to stop. |
 | Playback leaves divisions and ticks that cannot be written, so a paste lands off the bar line. | Press the stop button (go to beginning) before moving the playhead. |
+| Exporting a region with several channels asks whether to convert them. | Answer `Don't Convert`. |
 | Track and region descriptions gain `, mute`, `, solo` or `, muted`. | Ignore the suffix when reading names. |
 
 ## AudioToolbox

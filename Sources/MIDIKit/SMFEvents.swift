@@ -27,6 +27,13 @@ public struct SMF: Sendable {
         return (events.map(\.tick).min() ?? 0, ends.max() ?? 0)
     }
 
+    /// The channels, 1 to 16, used by notes and other channel events.
+    public var channels: Set<Int> {
+        Set(events.compactMap { event in
+            (0x80...0xEF).contains(event.bytes[0]) ? Int(event.bytes[0] & 0x0F) + 1 : nil
+        })
+    }
+
     /// True if a channel event or a text event sits on `tick`.
     func hasSizingEvent(atTick tick: Int) -> Bool {
         events.contains { $0.tick == tick && ($0.bytes[0] < 0xF0 || $0.bytes.starts(with: [0xFF, 0x01])) }

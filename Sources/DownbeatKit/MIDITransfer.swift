@@ -24,6 +24,8 @@ extension LogicApp {
             throw error
         }
         try wait("the exported file at \(url.path)") {
+            // Asked for a region with several channels. Keep them as they are.
+            try keepChannelsButton?.perform(kAXPressAction)
             let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
             return (size ?? 0) > 0 ? true : nil
         }
@@ -70,6 +72,15 @@ extension LogicApp {
             try no.perform(kAXPressAction)
         }
         try wait("a new track") { try tracks().count > before ? true : nil }
+    }
+
+    private var keepChannelsButton: AXElement? {
+        dialogs.lazy.compactMap { dialog in
+            dialog.first(maxDepth: 3) {
+                $0.role == kAXButtonRole && $0.title?.hasPrefix("Don") == true
+                    && $0.title?.hasSuffix("Convert") == true
+            }
+        }.first
     }
 
     private var tempoAlert: AXElement? {

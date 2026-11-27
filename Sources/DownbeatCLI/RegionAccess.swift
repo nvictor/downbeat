@@ -48,6 +48,13 @@ extension LogicApp {
 
     /// Replaces the selected region with the content of an edited export.
     func importRegion(_ source: URL, at placement: Placement) throws {
+        let channels = try SMF(data: Data(contentsOf: source)).channels
+        guard channels.count <= 1 else {
+            throw DownbeatError("""
+                The file uses channels \(channels.sorted().map(String.init).joined(separator: ", ")). \
+                Logic Pro changes the color of such a region, so it cannot be replaced. Nothing was changed.
+                """)
+        }
         try withTemporaryDirectory { directory in
             let prepared = directory.appendingPathComponent("import.mid")
             try MIDIFile.prepareForImport(source, to: prepared)
