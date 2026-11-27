@@ -54,6 +54,10 @@ downbeat mixer volume "Bass" --db -6 --project "Night Drive"
 downbeat mixer pan "Bass" --value -20 --project "Night Drive"
 ```
 
+```bash
+downbeat marker create "Chorus" --bar 9 --project "Night Drive"
+```
+
 ## Play and save
 
 ```bash

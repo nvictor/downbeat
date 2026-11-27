@@ -65,9 +65,12 @@ public struct LogicApp {
     }
 
     /// The first window backed by a document, with the document's file path.
+    /// Tracks windows come first: lists and editors are backed by the document too.
     var projectWindow: (element: AXElement, path: String?)? {
         let main = root.element(kAXMainWindowAttribute)
-        for window in ([main].compactMap { $0 } + root.windows) {
+        let windows = [main].compactMap { $0 } + root.windows
+        let tracks = windows.filter { $0.title?.hasSuffix(" - Tracks") == true }
+        for window in tracks + windows {
             if let document = window.string(kAXDocumentAttribute), let url = URL(string: document) {
                 return (window, url.path)
             }

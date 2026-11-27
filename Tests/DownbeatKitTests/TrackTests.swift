@@ -43,3 +43,10 @@ func ignoresTheStateAfterATrackName(description: String) {
 func readsFaderLevels(text: String, level: Double) {
     #expect(LogicApp.decibels(text) == level)
 }
+
+@Test func readsMarkerPositions() throws {
+    let start = try #require(LogicApp.markerPosition("13 1 1 1 "))
+    #expect(start == (13, true))
+    #expect(try #require(LogicApp.markerPosition("5 2 1 1 ")) == (5, false))
+    #expect(LogicApp.markerPosition("∞") == nil)
+}

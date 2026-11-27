@@ -100,6 +100,15 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 
 Neither command is tested with automation.
 
+## Markers
+
+`downbeat marker create` reads the Marker List, moves the playhead, uses `Navigate > Create Marker` and `Rename Marker`, then reads the list again.
+
+- Refused when a marker already sits in the bar, and for names with `#`, which Logic replaces with the marker number.
+- The Marker List is closed afterwards, even if it was open: with focus, it disables the marker commands.
+- If naming fails, the unnamed marker stays. Remove it with Undo.
+- Tested with the list empty, open and longer than the window.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

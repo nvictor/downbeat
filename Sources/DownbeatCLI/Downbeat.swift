@@ -7,7 +7,7 @@ struct Downbeat: ParsableCommand {
         abstract: "Control Logic Pro from the command line.",
         subcommands: [
             Check.self, Inspect.self, StatusCommand.self, Project.self, Tempo.self,
-            TrackCommands.self, Region.self, NoteCommands.self, MIDICommands.self, MixerCommands.self,
+            TrackCommands.self, Region.self, NoteCommands.self, MIDICommands.self, MixerCommands.self, MarkerCommands.self,
             Play.self, Stop.self, Record.self,
         ]
     )
