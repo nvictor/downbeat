@@ -6,7 +6,6 @@ Names can change.
 
 ### Notes
 
-- [ ] `downbeat note delete --region "Intro" --id 12`
 - [ ] `downbeat note update --region "Intro" --id 12 --pitch D4`
 - [ ] `downbeat note export --region "Intro" > notes.json`
 - [ ] `downbeat note import --region "Intro" notes.json`

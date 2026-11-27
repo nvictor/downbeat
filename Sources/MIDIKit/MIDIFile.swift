@@ -24,6 +24,16 @@ public struct Note: Equatable, Sendable, Codable {
     public let channel: Int
 }
 
+extension Note {
+    init(track: Int, beat: Double, message: MIDINoteMessage) {
+        self.init(
+            track: track, beat: beat, duration: Double(message.duration), pitch: message.note,
+            velocity: message.velocity, releaseVelocity: message.releaseVelocity,
+            channel: Int(message.channel) + 1
+        )
+    }
+}
+
 /// A standard MIDI file backed by an AudioToolbox `MusicSequence`.
 public final class MIDIFile {
     let sequence: MusicSequence
@@ -65,17 +75,48 @@ public final class MIDIFile {
     public func notes() throws -> [Note] {
         var result: [Note] = []
         try forEachNote { track, beat, message, _ in
-            result.append(Note(
-                track: track,
-                beat: beat,
-                duration: Double(message.duration),
-                pitch: message.note,
-                velocity: message.velocity,
-                releaseVelocity: message.releaseVelocity,
-                channel: Int(message.channel) + 1
-            ))
+            result.append(Note(track: track, beat: beat, message: message))
         }
         return result
+    }
+
+    /// Notes in listing order. A note id is its place in this list, from 1.
+    public func listedNotes() throws -> [Note] {
+        try notes().sorted {
+            ($0.beat, $0.pitch, $0.channel, $0.duration, $0.velocity)
+                < ($1.beat, $1.pitch, $1.channel, $1.duration, $1.velocity)
+        }
+    }
+
+    /// Deletes the note with this id and returns it.
+    @discardableResult
+    public func deleteNote(id: Int) throws -> Note {
+        let listed = try listedNotes()
+        guard listed.indices.contains(id - 1) else {
+            throw LayoutError(description: "no note has id \(id); the region has \(listed.count) notes")
+        }
+        let target = listed[id - 1]
+        var track: MusicTrack?
+        try check(MusicSequenceGetIndTrack(sequence, UInt32(target.track), &track), "MusicSequenceGetIndTrack")
+        var deleted = false
+        try forEachEvent(in: track!) { _, beat, type, data, _ in
+            guard !deleted, type == kMusicEventType_MIDINoteMessage else { return false }
+            let message = data.load(as: MIDINoteMessage.self)
+            deleted = Note(track: target.track, beat: beat, message: message) == target
+            return deleted
+        }
+        return target
+    }
+
+    /// Makes sure something marks the start and the last tick, so that removing events
+    /// does not shorten the region Logic Pro makes of the file.
+    public static func keepBounds(of file: URL, start: Int, end: Int) throws {
+        let smf = try SMF(data: Data(contentsOf: file))
+        let missing = [start, end - 1].filter { !smf.hasSizingEvent(atTick: $0) }
+        guard !missing.isEmpty else { return }
+        let edited = try MIDIFile(contentsOf: file)
+        for tick in missing { try edited.addMarker(atTick: tick) }
+        try edited.save(to: file)
     }
 
     /// Adds one note. `beat` and `duration` are in quarter notes, `beat` from the start of the file.

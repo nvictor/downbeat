@@ -184,3 +184,28 @@ func refusesBadPitches(text: String) {
     }
     #expect(after.channels == [2, 3])
 }
+
+@Test func deleteNoteRemovesOnlyThatNote() throws {
+    let (before, after) = try roundTrip { try $0.deleteNote(id: 2) }
+    let changes = before.differences(from: after)
+    #expect(changes.added.count + changes.removed.count == 2)
+    #expect(after.events.allSatisfy { $0.bytes.count < 2 || $0.bytes[0] & 0xE0 != 0x80 || $0.bytes[1] != 0x40 })
+}
+
+@Test func deleteNoteRefusesAnUnknownId() throws {
+    #expect(throws: LayoutError.self) { _ = try roundTrip { try $0.deleteNote(id: 3) } }
+}
+
+@Test func keepBoundsSurvivesDeletingTheOuterNotes() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let end = try SMF(data: fixture()).bounds.end
+    let file = try MIDIFile(contentsOf: url)
+    try file.deleteNote(id: 2)
+    try file.save(to: url)
+    try MIDIFile.keepBounds(of: url, start: 0, end: end)
+    let smf = try SMF(data: Data(contentsOf: url))
+    #expect(smf.hasSizingEvent(atTick: 0))
+    #expect(smf.hasSizingEvent(atTick: end - 1))
+}

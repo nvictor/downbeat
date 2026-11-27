@@ -72,6 +72,7 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
+| Deleting the first, the last or every note | Region bounds preserved. |
 | Several MIDI channels in one region | Can be read. Replacing is refused: Logic gives the imported region another color. |
 | Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
 | 3/4 | Preserved. Other meters not tested. |

@@ -29,6 +29,7 @@ downbeat region import <file.mid> <region> --project <name>     # replaces the r
 downbeat region delete <region> --project <name>
 downbeat note list <region> [--json]
 downbeat note add <region> --project <name> --pitch C3 --beat 0 --duration 0.5 [--velocity 100]
+downbeat note delete <region> --project <name> --id n
 downbeat note transpose <region> --project <name> --semitones n
 downbeat note velocity <region> --project <name> --value n
 downbeat note quantize <region> --project <name> --division 1/16

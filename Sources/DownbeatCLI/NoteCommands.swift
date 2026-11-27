@@ -7,7 +7,7 @@ struct NoteCommands: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "note",
         abstract: "Read and edit the notes of a region.",
-        subcommands: [List.self, Add.self, Transpose.self, Velocity.self, Quantize.self]
+        subcommands: [List.self, Add.self, Delete.self, Transpose.self, Velocity.self, Quantize.self]
     )
 
     struct Listing: Encodable {
@@ -43,8 +43,7 @@ struct NoteCommands: ParsableCommand {
                 let placement = try LogicApp().exportRegion(options.reference, to: url)
                 let smf = try SMF(data: Data(contentsOf: url))
                 let origin = Double(smf.bounds.start) / Double(smf.ticksPerQuarter)
-                let notes = try MIDIFile(contentsOf: url).notes()
-                    .sorted { ($0.beat, $0.pitch) < ($1.beat, $1.pitch) }
+                let notes = try MIDIFile(contentsOf: url).listedNotes()
                 return Listing(
                     track: placement.track, startBar: placement.startBar, endBar: placement.endBar,
                     notes: notes.enumerated().map { index, note in
@@ -115,6 +114,31 @@ struct NoteCommands: ParsableCommand {
                     pitch: number(), beat: bounds.start + beat, duration: duration,
                     velocity: velocity, channel: file.notes().first?.channel ?? 1
                 )
+                return 1
+            }
+        }
+    }
+
+    struct Delete: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Delete one note from a region.",
+            discussion: "Take the id from `downbeat note list`. Ids change after every edit."
+        )
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        @Option(help: "Note id from `downbeat note list`.")
+        var id: Int
+
+        func validate() throws {
+            guard id >= 1 else { throw ValidationError("--id must be 1 or more.") }
+        }
+
+        func run() throws {
+            try edit(options, in: target) { file, _ in
+                let note = try file.deleteNote(id: id)
+                print("Deleting \(Pitch.name(Int(note.pitch))), velocity \(note.velocity).")
                 return 1
             }
         }
@@ -204,6 +228,7 @@ private func edit(
             return
         }
         try file.save(to: edited)
+        try MIDIFile.keepBounds(of: edited, start: smf.bounds.start, end: smf.bounds.end)
         try app.importRegion(edited, at: placement)
         print("Changed \(count) \(count == 1 ? "note" : "notes").")
     }
