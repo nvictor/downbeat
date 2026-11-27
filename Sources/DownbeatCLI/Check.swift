@@ -1,5 +1,5 @@
 import ArgumentParser
-import LogicKit
+import DownbeatKit
 
 struct Check: ParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Check that Logic Pro can be controlled.")

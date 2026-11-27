@@ -18,17 +18,17 @@ public struct NewProject: Sendable {
     }
 
     public static var defaultTemplate: URL {
-        URL.applicationSupportDirectory.appending(path: "logic-cli/Blank.logicx")
+        URL.applicationSupportDirectory.appending(path: "downbeat/Blank.logicx")
     }
 
     /// Copies a project, leaving out the autosave, backup and undo data of the source.
     public static func copyProject(_ source: URL, to destination: URL) throws {
         let files = FileManager.default
         guard source.pathExtension == "logicx", files.fileExists(atPath: source.path) else {
-            throw LogicError("\(source.path) is not a .logicx project.")
+            throw DownbeatError("\(source.path) is not a .logicx project.")
         }
         guard !files.fileExists(atPath: destination.path) else {
-            throw LogicError("\(destination.path) already exists.")
+            throw DownbeatError("\(destination.path) already exists.")
         }
         try files.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         try files.copyItem(at: source, to: destination)
@@ -45,18 +45,18 @@ public struct NewProject: Sendable {
         try tempo.map(ProjectSettings.checkTempo)
         try signature.map(ProjectSettings.checkSignature)
         guard AXIsProcessTrusted() else {
-            throw LogicError("Accessibility permission is missing. Run `logic check`.")
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
         }
         // Opening a project closes the current one, so never start with unsaved work.
         if let running = try? LogicApp() {
-            guard running.dialogs.isEmpty else { throw LogicError("A dialog is open in Logic Pro. Close it first.") }
+            guard running.dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
             let unsaved = try LogicApp.unsavedDocuments()
             guard unsaved.isEmpty else {
-                throw LogicError("Save or close \(unsaved.joined(separator: ", ")) first. Nothing was changed.")
+                throw DownbeatError("Save or close \(unsaved.joined(separator: ", ")) first. Nothing was changed.")
             }
         }
         guard let logic = NSWorkspace.shared.urlForApplication(withBundleIdentifier: LogicApp.bundleIdentifier) else {
-            throw LogicError("Logic Pro is not installed.")
+            throw DownbeatError("Logic Pro is not installed.")
         }
         try Self.copyProject(template, to: destination)
         try open(destination, with: logic)
@@ -111,7 +111,7 @@ public struct NewProject: Sendable {
         process.arguments = ["-a", application.path, project.path]
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw LogicError("Could not open \(project.path).") }
+        guard process.terminationStatus == 0 else { throw DownbeatError("Could not open \(project.path).") }
     }
 }
 
@@ -125,7 +125,7 @@ extension LogicApp {
             // The Save menu item is ignored after a pop-up menu was used, so press Command-S.
             try sendKey(Key.s, using: ["command down"])
         }
-        throw LogicError("The project did not stay saved. Check it in Logic Pro.")
+        throw DownbeatError("The project did not stay saved. Check it in Logic Pro.")
     }
 
     /// Names of open projects with unsaved changes. Needs Automation permission.
@@ -135,7 +135,7 @@ extension LogicApp {
             """)
         var failure: NSDictionary?
         guard let result = script?.executeAndReturnError(&failure), failure == nil else {
-            throw LogicError("Could not ask Logic Pro about unsaved changes: \(failure?[NSAppleScript.errorMessage] ?? "")")
+            throw DownbeatError("Could not ask Logic Pro about unsaved changes: \(failure?[NSAppleScript.errorMessage] ?? "")")
         }
         guard result.numberOfItems > 0 else { return [] }
         return (1...result.numberOfItems).compactMap { result.atIndex($0)?.stringValue }

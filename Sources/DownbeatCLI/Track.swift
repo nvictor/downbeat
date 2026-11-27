@@ -1,5 +1,5 @@
 import ArgumentParser
-import LogicKit
+import DownbeatKit
 
 extension TrackType: ExpressibleByArgument {}
 
@@ -62,7 +62,7 @@ struct TrackCommands: ParsableCommand {
                 do {
                     track = try app.renameTrack(String(number), to: name)
                 } catch {
-                    throw LogicError("Track \(number) was created but not renamed. \(error)")
+                    throw DownbeatError("Track \(number) was created but not renamed. \(error)")
                 }
             }
             print("\(track.number.map(String.init) ?? "?")  \(track.name)")

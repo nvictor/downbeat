@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import LogicKit
+import DownbeatKit
 import MIDIKit
 
 struct RegionOptions: ParsableArguments {
@@ -57,7 +57,7 @@ extension LogicApp {
 
 func withTemporaryDirectory<T>(_ body: (URL) throws -> T) throws -> T {
     let directory = FileManager.default.temporaryDirectory
-        .appendingPathComponent("logic-cli-\(UUID().uuidString)")
+        .appendingPathComponent("downbeat-\(UUID().uuidString)")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: directory) }
     return try body(directory)

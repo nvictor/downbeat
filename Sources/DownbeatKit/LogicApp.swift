@@ -31,9 +31,9 @@ public struct LogicApp {
 
     public init() throws {
         guard AXIsProcessTrusted() else {
-            throw LogicError("Accessibility permission is missing. Run `logic check`.")
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
         }
-        guard let running = Self.process else { throw LogicError("Logic Pro is not running.") }
+        guard let running = Self.process else { throw DownbeatError("Logic Pro is not running.") }
         self.running = running
         root = .application(pid: running.processIdentifier)
     }
@@ -90,9 +90,9 @@ public struct LogicApp {
     public func requireProject(named expected: String) throws {
         let found = projectWindow?.path.map(Self.projectName(path:))
         guard found == expected else {
-            throw LogicError("Front project is \(found ?? "unknown"), expected \(expected). Nothing was changed.")
+            throw DownbeatError("Front project is \(found ?? "unknown"), expected \(expected). Nothing was changed.")
         }
-        guard dialogs.isEmpty else { throw LogicError("A dialog is open in Logic Pro. Close it first.") }
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
     }
 
     /// Activating again while already in front can move keyboard focus away from a sheet.
@@ -112,5 +112,5 @@ func wait<T>(_ what: String, seconds: Double = 8, _ probe: () throws -> T?) thro
         if let value = try probe() { return value }
         Thread.sleep(forTimeInterval: 0.1)
     } while Date() < deadline
-    throw LogicError("Timed out waiting for \(what).")
+    throw DownbeatError("Timed out waiting for \(what).")
 }

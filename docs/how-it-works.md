@@ -1,17 +1,13 @@
-# Spike: MIDI round trip
+# How downbeat works, and its limits
 
-Question: can a region be exported, edited and put back in Logic Pro without losing anything?
+downbeat drives Logic Pro through accessibility, keystrokes, mouse clicks, AppleScript and MIDI files.
 
-## Verdict: go, with limits
+Tested on Logic Pro 13.0, macOS 27.2.1, Swift 6.4.2, English UI.
 
-Export, edit, import and move back works end to end, on the same track and bars.
-Limits: see the untested rows below.
+## Editing a region
 
-Environment: Logic Pro 13.0, macOS 27.2.1, Swift 6.4.2, English UI.
-
-Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
-
-## The replace sequence
+A region is exported, edited as a MIDI file, and put back on the same track and bars.
+`downbeat region import` does this:
 
 1. Read the selected region's track, start bar and end bar.
 2. Add a text event on the last tick of the file, to fix the region length.
@@ -24,7 +20,29 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 
 If a step fails, the finished steps are undone. Tested with failures injected after Cut and after Paste.
 
-## Preserved or lost
+Regions with Loop, Mute or playback settings are refused, read from the Region inspector.
+
+## Starting a project
+
+`downbeat project new`:
+
+1. Refuses if an open project has unsaved changes.
+2. Copies the template, without its autosave, backup and undo data.
+3. Opens the copy, starting Logic Pro if needed.
+4. Sets meter, key and tempo at bar 1.
+5. Saves, then checks the stored settings.
+
+Logic Pro keeps the window layout in the project, so close extra windows before saving a template.
+
+## Tracks
+
+- Created with the `Track` menu. Logic Pro adds the track after the selected one.
+- Renaming double-clicks the name and writes into the editor. Nothing is typed, because keys outside an edit field act as Logic Pro key commands.
+- Off-screen tracks are scrolled into view before a rename.
+
+## What survives a region edit
+
+Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
 
 | Item | Result |
 | --- | --- |
@@ -54,7 +72,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
   - 60 ticks apart or less: filled in. 240 ticks apart: left alone. Between them: not tested.
   - Ramps are filled on a 1/256 note grid (7.5 ticks at 480). Closer events get a midpoint.
   - Not checked whether it happens on import or on export.
-- Fix: `logic region export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
+- Fix: `downbeat region export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
 - Side effects
   - Real recorded data that dense, on a straight line, is thinned too.
   - Events 8 to 60 ticks apart are filled to the 1/256 grid by the first pass.
@@ -82,6 +100,11 @@ Without a fix the count grew on each pass: 215, 428, 854.
 | Menu items stay disabled until their menu has opened. | Open and close the menu when an item looks disabled. |
 | Selecting an already selected region deselects it. Selecting another one adds to the selection. | Clear the others, then select only if needed. |
 | Floating editors report the dialog subrole. | Detect blocking dialogs by modality. |
+| Logic Pro rebuilds the control bar after a change, so a pop-up menu may not open. | Fetch the button again and retry. |
+| The `Save` menu item is ignored after a pop-up menu was used. | Press `Cmd+S`. |
+| Some changes are recorded after they show, so a saved project turns modified again. | Save until it stays saved. |
+| The first click after coming to the front may only raise the window. | Wait before clicking. |
+| The track list has page actions that fail. | Scroll with the mouse wheel and wait for it to stop. |
 
 ## AudioToolbox
 
@@ -89,18 +112,8 @@ Without a fix the count grew on each pass: 215, 428, 854.
 - Channel events are kept, including pitch bend, pressure, program change and release velocity.
 - Saving an exported file drops nothing, apart from the thinning above.
 
-## After the spike
+## Open issues
 
-- The `spike` commands became `logic region` and `logic note`. The sequence above is `logic region import`.
-- Regions with Loop or playback settings are refused, read from the Region inspector.
-- A text event at the region start keeps an empty first bar. Without it, Logic Pro drops the bar.
-- Verified live: note list, transpose, velocity, quantize, region export and import, refusals.
+- One region edit failed at its Cut step right after a project was opened. It undid itself and passed on retry. Cause unknown.
 - A custom color is compared by the name the inspector reports, so a change of shade alone may go unnoticed.
-
-## Scratch project
-
-`~/Music/Logic/RoundTrip.logicx`:
-
-- One software instrument track.
-- One MIDI region starting at bar 3.
-- A few notes, some CC and pitch bend.
+- A first event placed before its bar line has not been tested.

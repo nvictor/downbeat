@@ -3,23 +3,23 @@
 ## Implemented
 
 ```
-logic check [--json]
-logic inspect [--menus] [--json]
-logic status [--json]
-logic project new <name> [--tempo n] [--signature 6/8] [--key "A minor"] [--directory d] [--template t]
-logic project template <path.logicx> [--replace]
-logic tempo get
-logic tempo set <n> --project <name>
-logic track list [--json]
-logic track create --type instrument|audio|external [--name n] --project <name>
-logic track rename <track> <new name> --project <name>
-logic region list [--track t] [--json]
-logic region export <region> --output <file.mid>
-logic region import <file.mid> <region> --project <name>     # replaces the region
-logic note list <region> [--json]
-logic note transpose <region> --project <name> --semitones n
-logic note velocity <region> --project <name> --value n
-logic note quantize <region> --project <name> --division 1/16
+downbeat check [--json]
+downbeat inspect [--menus] [--json]
+downbeat status [--json]
+downbeat project new <name> [--tempo n] [--signature 6/8] [--key "A minor"] [--directory d] [--template t]
+downbeat project template <path.logicx> [--replace]
+downbeat tempo get
+downbeat tempo set <n> --project <name>
+downbeat track list [--json]
+downbeat track create --type instrument|audio|external [--name n] --project <name>
+downbeat track rename <track> <new name> --project <name>
+downbeat region list [--track t] [--json]
+downbeat region export <region> --output <file.mid>
+downbeat region import <file.mid> <region> --project <name>     # replaces the region
+downbeat note list <region> [--json]
+downbeat note transpose <region> --project <name> --semitones n
+downbeat note velocity <region> --project <name> --value n
+downbeat note quantize <region> --project <name> --division 1/16
 ```
 
 `<region>` is any of `--region <name>`, `--track <name|number>`, `--bar n`, matching one region.
@@ -30,48 +30,46 @@ Proposed, not implemented. Names can change.
 
 ```
 # diagnostics
-logic menus
-logic windows
-logic midi ports
+downbeat midi ports
 
 # transport
-logic play
-logic stop
-logic record
+downbeat play
+downbeat stop
+downbeat record
 
 # project
-logic project open <path.logicx>
-logic project save
-logic project info
+downbeat project open <path.logicx>
+downbeat project save
+downbeat project info
 
 # tracks
-logic track select "Drums"
-logic track mute "Bass"
-logic track solo "Lead Guitar"
+downbeat track select "Drums"
+downbeat track mute "Bass"
+downbeat track solo "Lead Guitar"
 
 # mixer
-logic mixer volume "Bass" -6
-logic mixer pan "Lead Guitar" 20
+downbeat mixer volume "Bass" -6
+downbeat mixer pan "Lead Guitar" 20
 
 # markers
-logic marker create "Intro" --bar 1
+downbeat marker create "Intro" --bar 1
 
 # MIDI files
-logic midi import drums.mid
+downbeat midi import drums.mid
 
 # regions
-logic region create --track "Drums" --bar 1 --bars 4
-logic region delete "Verse"
-logic region rename "Verse" "Intro"
-logic region duplicate "Intro" --bar 5
-logic region move "Intro" --bar 9
+downbeat region create --track "Drums" --bar 1 --bars 4
+downbeat region delete "Verse"
+downbeat region rename "Verse" "Intro"
+downbeat region duplicate "Intro" --bar 5
+downbeat region move "Intro" --bar 9
 
 # notes
-logic note add --region "Intro" --pitch C4 --beat 1 --duration 0.5 --velocity 100
-logic note delete --region "Intro" --id 12
-logic note update --region "Intro" --id 12 --pitch D4
-logic note export --region "Intro" > notes.json
-logic note import --region "Intro" notes.json
+downbeat note add --region "Intro" --pitch C4 --beat 1 --duration 0.5 --velocity 100
+downbeat note delete --region "Intro" --id 12
+downbeat note update --region "Intro" --id 12 --pitch D4
+downbeat note export --region "Intro" > notes.json
+downbeat note import --region "Intro" notes.json
 ```
 
 ## Also deferred

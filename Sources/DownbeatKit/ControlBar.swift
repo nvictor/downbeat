@@ -15,7 +15,7 @@ public struct Status: Codable, Sendable {
 
 extension LogicApp {
     public func status() throws -> Status {
-        guard projectWindow != nil else { throw LogicError("Open a project.") }
+        guard projectWindow != nil else { throw DownbeatError("Open a project.") }
         func isOn(_ button: String) throws -> Bool {
             try control { $0.identifier == "controlBar/\(button)" }.string(kAXValueAttribute) == "1"
         }
@@ -41,7 +41,7 @@ extension LogicApp {
         let slider = try control(kAXSliderRole, "Tempo")
         func current() throws -> Double {
             guard let value = slider.string(kAXValueAttribute).flatMap(Double.init) else {
-                throw LogicError("The tempo could not be read.")
+                throw DownbeatError("The tempo could not be read.")
             }
             return value
         }
@@ -52,7 +52,7 @@ extension LogicApp {
             try wait("the tempo to change", seconds: 2) { try current() != before ? true : nil }
         }
         guard try current() == Double(tempo) else {
-            throw LogicError("Could not set the tempo to \(tempo). It is \(try current()).")
+            throw DownbeatError("Could not set the tempo to \(tempo). It is \(try current()).")
         }
     }
 
@@ -99,7 +99,7 @@ extension LogicApp {
 
     private func control(_ matches: (AXElement) -> Bool) throws -> AXElement {
         guard let found = projectWindow?.element.first(where: matches) else {
-            throw LogicError("A control bar item was not found. Show the control bar in Logic Pro.")
+            throw DownbeatError("A control bar item was not found. Show the control bar in Logic Pro.")
         }
         return found
     }

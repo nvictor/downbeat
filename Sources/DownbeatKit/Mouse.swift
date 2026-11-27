@@ -12,7 +12,7 @@ extension LogicApp {
             AXUIElementCreateSystemWide(), Float(point.x), Float(point.y), &hit
         )
         guard let hit, element.first(maxDepth: 2, where: { CFEqual($0.raw, hit) }) != nil else {
-            throw LogicError("""
+            throw DownbeatError("""
                 The spot to click is covered or scrolled out of view. \
                 Show it in Logic Pro, and keep hands off keyboard and mouse.
                 """)
@@ -42,7 +42,7 @@ extension LogicApp {
             ancestor = current.element(kAXParentAttribute)
         }
         guard ancestor != nil else {
-            throw LogicError("The track list is covered. Keep hands off keyboard and mouse.")
+            throw DownbeatError("The track list is covered. Keep hands off keyboard and mouse.")
         }
         let event = CGEvent(
             scrollWheelEvent2Source: CGEventSource(stateID: .hidSystemState),

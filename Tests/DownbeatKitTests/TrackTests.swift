@@ -1,5 +1,5 @@
 import Testing
-@testable import LogicKit
+@testable import DownbeatKit
 
 private func track(_ number: Int, _ name: String) -> TrackSummary {
     TrackSummary(number: number, name: name, selected: false, muted: false, soloed: false, recordEnabled: false)
@@ -15,12 +15,12 @@ private let tracks = [track(1, "Drums"), track(2, "Bass"), track(3, "Bass"), tra
 
 @Test(arguments: ["Bass", "9", "drums"])
 func refusesUnclearTrackReferences(reference: String) {
-    #expect(throws: LogicError.self) { try LogicApp.match(reference, in: tracks) }
+    #expect(throws: DownbeatError.self) { try LogicApp.match(reference, in: tracks) }
 }
 
 @Test(arguments: ["", "   ", "a\nb"])
 func refusesBadTrackNames(name: String) {
-    #expect(throws: LogicError.self) { try LogicApp.checkTrackName(name) }
+    #expect(throws: DownbeatError.self) { try LogicApp.checkTrackName(name) }
 }
 
 @Test func readsNamesThatContainQuotes() {

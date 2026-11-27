@@ -66,21 +66,21 @@ extension LogicApp {
     /// Makes the one region that matches the only selected region.
     @discardableResult
     public func select(_ reference: RegionReference) throws -> Placement {
-        guard dialogs.isEmpty else { throw LogicError("A dialog is open in Logic Pro. Close it first.") }
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let all = try tracks()
         let matches = try regionSummaries().filter { $0.matches(reference) }
-        guard let match = matches.first else { throw LogicError("No region matches. See `logic region list`.") }
+        guard let match = matches.first else { throw DownbeatError("No region matches. See `downbeat region list`.") }
         guard matches.count == 1 else {
-            throw LogicError("\(matches.count) regions match. Narrow it with --region, --track and --bar.")
+            throw DownbeatError("\(matches.count) regions match. Narrow it with --region, --track and --bar.")
         }
         guard let bar = match.startBar else {
-            throw LogicError("The region must start and end on a bar line.")
+            throw DownbeatError("The region must start and end on a bar line.")
         }
         guard let track = all.first(where: {
             let parts = Self.trackParts($0.name)
             return parts.number == match.trackNumber && parts.name == match.track
         }) else {
-            throw LogicError("The track \(match.track) was not found.")
+            throw DownbeatError("The track \(match.track) was not found.")
         }
         try activate()
         try select(regionStartingAt: bar, on: track.name)
@@ -93,7 +93,7 @@ extension LogicApp {
               let contents = window.first(where: {
                   $0.role == kAXGroupRole && $0.string(kAXDescriptionAttribute) == "Tracks contents"
               }) else {
-            throw LogicError("The Tracks area was not found.")
+            throw DownbeatError("The Tracks area was not found.")
         }
         return contents.children
             .filter { $0.role == "AXLayoutArea" && $0.string(kAXDescriptionAttribute)?.hasPrefix("Track ") == true }

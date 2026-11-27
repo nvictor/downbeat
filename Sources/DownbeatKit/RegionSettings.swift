@@ -51,7 +51,7 @@ extension LogicApp {
         try showRegionInspector()
         let problems = RegionSettings.problems(in: try inspectorControls())
         guard problems.isEmpty else {
-            throw LogicError("""
+            throw DownbeatError("""
                 The region has settings that cannot survive a round trip: \(problems.joined(separator: "; ")). \
                 Reset them in the Region inspector. Nothing was changed.
                 """)
@@ -67,7 +67,7 @@ extension LogicApp {
     }
 
     private func showRegionInspector() throws {
-        guard let window = projectWindow?.element else { throw LogicError("Open a project.") }
+        guard let window = projectWindow?.element else { throw DownbeatError("Open a project.") }
         if regionInspector == nil {
             let toggle = window.first { $0.identifier == "controlBar/inspectorButton" }
             if let toggle, toggle.string(kAXValueAttribute) == "0" { try toggle.perform(kAXPressAction) }
@@ -99,7 +99,7 @@ extension LogicApp {
     }
 
     private func inspectorControls() throws -> [InspectorControl] {
-        guard let inspector = regionInspector else { throw LogicError("The Region inspector was not found.") }
+        guard let inspector = regionInspector else { throw DownbeatError("The Region inspector was not found.") }
         var result: [InspectorControl] = []
         func collect(_ element: AXElement, depth: Int) {
             if element.role == kAXButtonRole || element.role == kAXCheckBoxRole,

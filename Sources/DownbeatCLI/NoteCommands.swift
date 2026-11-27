@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import LogicKit
+import DownbeatKit
 import MIDIKit
 
 struct NoteCommands: ParsableCommand {

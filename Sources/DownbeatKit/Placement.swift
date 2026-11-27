@@ -14,10 +14,10 @@ extension LogicApp {
             track.regions.filter(\.selected).map { (track.name, $0) }
         }
         guard selected.count == 1, let (track, region) = selected.first else {
-            throw LogicError("Select exactly one region.")
+            throw DownbeatError("Select exactly one region.")
         }
         guard let bars = region.help.flatMap(Self.bars) else {
-            throw LogicError("The region must start and end on a bar line.")
+            throw DownbeatError("The region must start and end on a bar line.")
         }
         return Placement(track: track, startBar: bars.start, endBar: bars.end)
     }
@@ -57,7 +57,7 @@ extension LogicApp {
             let imported = try selectedPlacement()
             guard imported.track != target.track,
                   imported.startBar == target.startBar, imported.endBar == target.endBar else {
-                throw LogicError("""
+                throw DownbeatError("""
                     Imported region is on \(imported.track), bars \(imported.startBar) to \(imported.endBar), \
                     expected bars \(target.startBar) to \(target.endBar).
                     """)
@@ -99,20 +99,20 @@ extension LogicApp {
             // The new region gets the default color, so a custom one cannot be kept.
             try select(regionStartingAt: target.startBar, on: target.track)
             guard (try? wait("the color", seconds: 3, { try regionColor() == color ? true : nil })) != nil else {
-                throw LogicError("The region has a custom color (\(color)), which cannot survive a round trip.")
+                throw DownbeatError("The region has a custom color (\(color)), which cannot survive a round trip.")
             }
         } catch {
             guard changes > 0 else { throw error }
             do {
                 try undo(changes)
-                guard try layout() == original else { throw LogicError("The tracks differ.") }
+                guard try layout() == original else { throw DownbeatError("The tracks differ.") }
             } catch let undoError {
-                throw LogicError("""
+                throw DownbeatError("""
                     \(error)
                     Could not restore the project (\(undoError)). Use Undo in Logic Pro.
                     """)
             }
-            throw LogicError("\(error)\nThe \(changes) finished steps were undone.")
+            throw DownbeatError("\(error)\nThe \(changes) finished steps were undone.")
         }
     }
 
@@ -139,7 +139,7 @@ extension LogicApp {
         guard let container = projectWindow?.element.first(where: {
             $0.role == kAXGroupRole && $0.string(kAXDescriptionAttribute) == group
         }), let found = container.children.first(where: { $0.string(kAXDescriptionAttribute) == description }) else {
-            throw LogicError("\(description) was not found in \(group).")
+            throw DownbeatError("\(description) was not found in \(group).")
         }
         return found
     }
@@ -149,7 +149,7 @@ extension LogicApp {
         guard let contents = projectWindow?.element.first(where: {
             $0.role == kAXGroupRole && $0.string(kAXDescriptionAttribute) == "Tracks contents"
         }) else {
-            throw LogicError("The Tracks area was not found.")
+            throw DownbeatError("The Tracks area was not found.")
         }
         return contents.children
     }
@@ -159,7 +159,7 @@ extension LogicApp {
         func isSelected() -> Bool { header.bool(kAXSelectedAttribute) == true }
         // Accessibility reports success but changes nothing, so click the header.
         if !isSelected() {
-            guard let frame = header.frame else { throw LogicError("\(track) is not on screen.") }
+            guard let frame = header.frame else { throw DownbeatError("\(track) is not on screen.") }
             try click(CGPoint(x: frame.minX + 12, y: frame.midY), on: header)
         }
         try wait("\(track) to be selected") { isSelected() ? true : nil }
@@ -170,7 +170,7 @@ extension LogicApp {
         guard let region = lane.children.first(where: {
             $0.string(kAXHelpAttribute).flatMap(Self.bars)?.start == bar
         }) else {
-            throw LogicError("No region starts at bar \(bar) on \(track).")
+            throw DownbeatError("No region starts at bar \(bar) on \(track).")
         }
         // Selecting adds to the selection, so clear it on every other region first.
         for other in try lanes().flatMap(\.children)
@@ -193,7 +193,7 @@ extension LogicApp {
             guard let slider = projectWindow?.element.first(where: {
                 $0.role == kAXSliderRole && $0.string(kAXDescriptionAttribute) == name
             }) else {
-                throw LogicError("The playhead \(name) field was not found.")
+                throw DownbeatError("The playhead \(name) field was not found.")
             }
             for _ in 0..<2000 {
                 guard let current = slider.string(kAXValueAttribute).flatMap(Int.init) else { break }
@@ -204,7 +204,7 @@ extension LogicApp {
                 }
             }
             guard slider.string(kAXValueAttribute) == String(target) else {
-                throw LogicError("Could not move the playhead to \(name) \(target).")
+                throw DownbeatError("Could not move the playhead to \(name) \(target).")
             }
         }
     }

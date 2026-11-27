@@ -8,13 +8,13 @@ public enum ProjectSettings {
 
     public static func checkTempo(_ tempo: Int) throws {
         guard tempoRange.contains(tempo) else {
-            throw LogicError("Tempo must be \(tempoRange.lowerBound) to \(tempoRange.upperBound).")
+            throw DownbeatError("Tempo must be \(tempoRange.lowerBound) to \(tempoRange.upperBound).")
         }
     }
 
     public static func checkSignature(_ signature: String) throws {
         guard signatures.contains(signature) else {
-            throw LogicError("The time signature must be one of \(signatures.joined(separator: ", ")).")
+            throw DownbeatError("The time signature must be one of \(signatures.joined(separator: ", ")).")
         }
     }
 
@@ -32,6 +32,6 @@ public enum ProjectSettings {
             default: break
             }
         }
-        throw LogicError("Write the key like \"A minor\", \"F# minor\" or \"Bb major\".")
+        throw DownbeatError("Write the key like \"A minor\", \"F# minor\" or \"Bb major\".")
     }
 }

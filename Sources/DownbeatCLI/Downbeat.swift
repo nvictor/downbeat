@@ -1,9 +1,9 @@
 import ArgumentParser
 
 @main
-struct Logic: ParsableCommand {
+struct Downbeat: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "logic",
+        commandName: "downbeat",
         abstract: "Control Logic Pro from the command line.",
         subcommands: [
             Check.self, Inspect.self, StatusCommand.self, Project.self, Tempo.self,

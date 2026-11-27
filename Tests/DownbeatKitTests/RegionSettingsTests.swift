@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import LogicKit
+@testable import DownbeatKit
 
 /// Rows as Logic Pro 13.0 reports them for an untouched region.
 private let plain = [
@@ -71,12 +71,12 @@ func spellsKeysLikeTheMenu(input: String, title: String) throws {
 
 @Test(arguments: ["A", "H minor", "G# major", "A dorian", ""])
 func refusesUnknownKeys(input: String) {
-    #expect(throws: LogicError.self) { try ProjectSettings.keyTitle(input) }
+    #expect(throws: DownbeatError.self) { try ProjectSettings.keyTitle(input) }
 }
 
 @Test func checksTempoAndSignature() {
-    #expect(throws: LogicError.self) { try ProjectSettings.checkTempo(4) }
-    #expect(throws: LogicError.self) { try ProjectSettings.checkSignature("9/16") }
+    #expect(throws: DownbeatError.self) { try ProjectSettings.checkTempo(4) }
+    #expect(throws: DownbeatError.self) { try ProjectSettings.checkSignature("9/16") }
 }
 
 @Test func copiesAProjectWithoutLeftovers() throws {
@@ -91,7 +91,7 @@ func refusesUnknownKeys(input: String) {
     try NewProject.copyProject(source, to: copy)
     #expect(try files.contentsOfDirectory(atPath: copy.appendingPathComponent("Alternatives/000").path) == [])
     #expect(files.fileExists(atPath: copy.appendingPathComponent("Resources").path))
-    #expect(throws: LogicError.self) { try NewProject.copyProject(source, to: copy) }
+    #expect(throws: DownbeatError.self) { try NewProject.copyProject(source, to: copy) }
 }
 
 @Test func comparesSettingsWithProjectMetadata() throws {

@@ -2,26 +2,26 @@
 import PackageDescription
 
 let package = Package(
-    name: "logic-cli",
+    name: "downbeat",
     platforms: [.macOS(.v15)],
     products: [
-        .executable(name: "logic", targets: ["LogicCLI"])
+        .executable(name: "downbeat", targets: ["DownbeatCLI"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0")
     ],
     targets: [
         .target(name: "MIDIKit"),
-        .target(name: "LogicKit"),
+        .target(name: "DownbeatKit"),
         .executableTarget(
-            name: "LogicCLI",
+            name: "DownbeatCLI",
             dependencies: [
                 "MIDIKit",
-                "LogicKit",
+                "DownbeatKit",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
         .testTarget(name: "MIDIKitTests", dependencies: ["MIDIKit"]),
-        .testTarget(name: "LogicKitTests", dependencies: ["LogicKit"]),
+        .testTarget(name: "DownbeatKitTests", dependencies: ["DownbeatKit"]),
     ]
 )

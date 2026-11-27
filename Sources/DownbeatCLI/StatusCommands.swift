@@ -1,5 +1,5 @@
 import ArgumentParser
-import LogicKit
+import DownbeatKit
 
 struct StatusCommand: ParsableCommand {
     static let configuration = CommandConfiguration(

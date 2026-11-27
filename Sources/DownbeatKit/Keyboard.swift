@@ -25,7 +25,7 @@ extension LogicApp {
         var failure: NSDictionary?
         script?.executeAndReturnError(&failure)
         if let failure {
-            throw LogicError("Could not send a key: \(failure[NSAppleScript.errorMessage] ?? failure)")
+            throw DownbeatError("Could not send a key: \(failure[NSAppleScript.errorMessage] ?? failure)")
         }
     }
 }

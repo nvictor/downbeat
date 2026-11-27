@@ -6,12 +6,12 @@ extension LogicApp {
     func choose(_ path: [String]) throws {
         guard let bar = root.element(kAXMenuBarAttribute),
               let top = bar.children.first(where: { $0.title == path.first }) else {
-            throw LogicError("Menu \(path.first ?? "") not found.")
+            throw DownbeatError("Menu \(path.first ?? "") not found.")
         }
         var item = top
         for title in path.dropFirst() {
             guard let next = item.children.flatMap(\.children).first(where: { $0.title == title }) else {
-                throw LogicError("Menu item \(title) not found.")
+                throw DownbeatError("Menu item \(title) not found.")
             }
             item = next
         }
@@ -22,7 +22,7 @@ extension LogicApp {
     func chooseUndo() throws {
         guard let edit = root.element(kAXMenuBarAttribute)?.children.first(where: { $0.title == "Edit" }),
               let item = edit.children.first?.children.first else {
-            throw LogicError("The Undo menu item was not found.")
+            throw DownbeatError("The Undo menu item was not found.")
         }
         try press(item, in: edit, named: "Edit > Undo")
     }
@@ -31,7 +31,7 @@ extension LogicApp {
         if item.bool(kAXEnabledAttribute) == false {
             refresh(menuBarItem)
             guard item.bool(kAXEnabledAttribute) != false else {
-                throw LogicError("\(name) is disabled. Is a region selected?")
+                throw DownbeatError("\(name) is disabled. Is a region selected?")
             }
         }
         // Press the item without opening its menu: an opened menu stays up behind the

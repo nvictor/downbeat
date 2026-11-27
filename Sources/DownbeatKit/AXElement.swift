@@ -1,7 +1,7 @@
 import ApplicationServices
 import Foundation
 
-public struct LogicError: Error, CustomStringConvertible {
+public struct DownbeatError: Error, CustomStringConvertible {
     public let description: String
     public init(_ description: String) { self.description = description }
 }
@@ -62,7 +62,7 @@ struct AXElement {
     func perform(_ action: String) throws {
         let status = AXUIElementPerformAction(raw, action as CFString)
         guard status == .success else {
-            throw LogicError("\(action) failed on \(role) \(title ?? identifier ?? "") (AXError \(status.rawValue))")
+            throw DownbeatError("\(action) failed on \(role) \(title ?? identifier ?? "") (AXError \(status.rawValue))")
         }
     }
 
@@ -74,7 +74,7 @@ struct AXElement {
     func set(_ attribute: String, to value: CFTypeRef) throws {
         let status = AXUIElementSetAttributeValue(raw, attribute as CFString, value)
         guard status == .success else {
-            throw LogicError("setting \(attribute) failed on \(role) \(identifier ?? "") (AXError \(status.rawValue))")
+            throw DownbeatError("setting \(attribute) failed on \(role) \(identifier ?? "") (AXError \(status.rawValue))")
         }
     }
 

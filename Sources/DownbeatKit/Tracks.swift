@@ -32,10 +32,10 @@ extension LogicApp {
         let byName = tracks.filter { $0.name == reference }
         let matches = byName.isEmpty ? tracks.filter { $0.number.map(String.init) == reference } : byName
         guard let first = matches.first else {
-            throw LogicError("No track is named or numbered \(reference). See `logic track list`.")
+            throw DownbeatError("No track is named or numbered \(reference). See `downbeat track list`.")
         }
         guard matches.count == 1 else {
-            throw LogicError("\(matches.count) tracks are named \(reference). Use the track number.")
+            throw DownbeatError("\(matches.count) tracks are named \(reference). Use the track number.")
         }
         return first
     }
@@ -43,13 +43,13 @@ extension LogicApp {
     public static func checkTrackName(_ name: String) throws {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
               !name.contains(where: \.isNewline) else {
-            throw LogicError("A track name cannot be empty or span lines.")
+            throw DownbeatError("A track name cannot be empty or span lines.")
         }
     }
 
     /// Adds a track after the selected one and returns it.
     public func createTrack(_ type: TrackType) throws -> TrackSummary {
-        guard dialogs.isEmpty else { throw LogicError("A dialog is open in Logic Pro. Close it first.") }
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let count = try trackHeaders().count
         try activate()
         try choose(["Track", type.menuTitle])
@@ -62,12 +62,12 @@ extension LogicApp {
 
     public func renameTrack(_ reference: String, to name: String) throws -> TrackSummary {
         try Self.checkTrackName(name)
-        guard dialogs.isEmpty else { throw LogicError("A dialog is open in Logic Pro. Close it first.") }
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let track = try Self.match(reference, in: trackSummaries())
         if track.name == name { return track }
         guard let header = try trackHeaders().first(where: { Self.summary($0) == track }),
               let field = header.children.first(where: { $0.role == kAXTextFieldRole }) else {
-            throw LogicError("The name of track \(reference) was not found.")
+            throw DownbeatError("The name of track \(reference) was not found.")
         }
         let editor = try openNameEditor(field, showing: track.name)
         try editor.set(kAXValueAttribute, to: name as CFString)
@@ -96,7 +96,7 @@ extension LogicApp {
             }
             if let editor { return editor }
         }
-        throw LogicError("The name editor of \(name) did not open. Nothing was renamed.")
+        throw DownbeatError("The name editor of \(name) did not open. Nothing was renamed.")
     }
 
     /// Waits until a scrolled element stops moving.
@@ -138,7 +138,7 @@ extension LogicApp {
         guard let group = projectWindow?.element.first(where: {
             $0.role == kAXGroupRole && $0.string(kAXDescriptionAttribute) == "Tracks header"
         }) else {
-            throw LogicError("The Tracks area was not found.")
+            throw DownbeatError("The Tracks area was not found.")
         }
         return group.children.filter { $0.string(kAXDescriptionAttribute)?.hasPrefix("Track ") == true }
     }

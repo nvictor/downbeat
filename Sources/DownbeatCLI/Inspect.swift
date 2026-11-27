@@ -1,5 +1,5 @@
 import ArgumentParser
-import LogicKit
+import DownbeatKit
 
 struct Inspect: ParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Dump the Logic Pro accessibility tree.")
