@@ -109,6 +109,10 @@ Neither command is tested with automation.
 - If naming fails, the unnamed marker stays. Remove it with Undo.
 - Tested with the list empty, open and longer than the window.
 
+## MIDI ports
+
+`downbeat midi ports` lists the CoreMIDI sources and destinations of the Mac. It does not use Logic Pro or need permissions. Tested with the two Logic Pro virtual ports only: no hardware, and no offline device.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

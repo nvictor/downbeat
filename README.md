@@ -94,6 +94,12 @@ downbeat region duplicate --region "Chorus" --to-bar 9 --project "Night Drive"
 downbeat region move --region "Chorus" --bar 9 --to-bar 17 --project "Night Drive"
 ```
 
+## MIDI ports
+
+```bash
+downbeat midi ports
+```
+
 ## Edit notes
 
 ```bash
