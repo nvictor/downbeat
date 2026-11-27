@@ -7,7 +7,7 @@ struct NoteCommands: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "note",
         abstract: "Read and edit the notes of a region.",
-        subcommands: [List.self, Add.self, Delete.self, Transpose.self, Velocity.self, Quantize.self]
+        subcommands: [List.self, Add.self, Delete.self, Update.self, Transpose.self, Velocity.self, Quantize.self]
     )
 
     struct Listing: Encodable {
@@ -89,29 +89,17 @@ struct NoteCommands: ParsableCommand {
         var velocity = 100
 
         func validate() throws {
-            _ = try number()
-            guard beat >= 0, beat.isFinite else { throw ValidationError("--beat must be 0 or more.") }
-            guard duration >= 0.01, duration.isFinite else {
-                throw ValidationError("--duration must be 0.01 or more.")
-            }
-            guard (1...127).contains(velocity) else { throw ValidationError("--velocity must be 1 to 127.") }
-        }
-
-        private func number() throws -> Int {
-            guard let number = Pitch.parse(pitch) else {
-                throw ValidationError("--pitch must be 0 to 127, or a name such as F#3.")
-            }
-            return number
+            _ = try pitchNumber(pitch)
+            try checkBeat(beat)
+            try checkDuration(duration)
+            try checkVelocity(velocity)
         }
 
         func run() throws {
             try edit(options, in: target) { file, bounds in
-                let length = bounds.end - bounds.start
-                guard beat + duration <= length + 1e-6 else {
-                    throw DownbeatError("The note must end by beat \(length.formatted()), the end of the region.")
-                }
+                try checkInside(end: bounds.start + beat + duration, of: bounds)
                 try file.addNote(
-                    pitch: number(), beat: bounds.start + beat, duration: duration,
+                    pitch: pitchNumber(pitch), beat: bounds.start + beat, duration: duration,
                     velocity: velocity, channel: file.notes().first?.channel ?? 1
                 )
                 return 1
@@ -140,6 +128,61 @@ struct NoteCommands: ParsableCommand {
                 let note = try file.deleteNote(id: id)
                 print("Deleting \(Pitch.name(Int(note.pitch))), velocity \(note.velocity).")
                 return 1
+            }
+        }
+    }
+
+    struct Update: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Change one note of a region.",
+            discussion: """
+                Take the id from `downbeat note list`. Ids change after every edit. \
+                Give at least one of --pitch, --beat, --duration and --velocity.
+                """
+        )
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        @Option(help: "Note id from `downbeat note list`.")
+        var id: Int
+
+        @Option(help: "Name or number, for example F#3 or 66. Middle C is C3.")
+        var pitch: String?
+
+        @Option(help: "Start, in quarter notes from the start of the region, from 0.")
+        var beat: Double?
+
+        @Option(help: "Length in quarter notes.")
+        var duration: Double?
+
+        @Option(help: "1 to 127.")
+        var velocity: Int?
+
+        func validate() throws {
+            guard id >= 1 else { throw ValidationError("--id must be 1 or more.") }
+            guard pitch != nil || beat != nil || duration != nil || velocity != nil else {
+                throw ValidationError("Give --pitch, --beat, --duration or --velocity.")
+            }
+            try pitch.map { _ = try pitchNumber($0) }
+            try beat.map(checkBeat)
+            try duration.map(checkDuration)
+            try velocity.map(checkVelocity)
+        }
+
+        func run() throws {
+            try edit(options, in: target) { file, bounds in
+                let old = try file.note(id: id)
+                // Only a moved or resized note can leave the region.
+                if beat != nil || duration != nil {
+                    let start = beat.map { bounds.start + $0 } ?? old.beat
+                    try checkInside(end: start + (duration ?? old.duration), of: bounds)
+                }
+                let changed = try file.updateNote(
+                    id: id, pitch: pitch.map(pitchNumber), beat: beat.map { bounds.start + $0 },
+                    duration: duration, velocity: velocity
+                )
+                return changed ? 1 : 0
             }
         }
     }
@@ -231,5 +274,32 @@ private func edit(
         try MIDIFile.keepBounds(of: edited, start: smf.bounds.start, end: smf.bounds.end)
         try app.importRegion(edited, at: placement)
         print("Changed \(count) \(count == 1 ? "note" : "notes").")
+    }
+}
+
+private func pitchNumber(_ text: String) throws -> Int {
+    guard let number = Pitch.parse(text) else {
+        throw ValidationError("--pitch must be 0 to 127, or a name such as F#3.")
+    }
+    return number
+}
+
+private func checkBeat(_ beat: Double) throws {
+    guard beat >= 0, beat.isFinite else { throw ValidationError("--beat must be 0 or more.") }
+}
+
+private func checkDuration(_ duration: Double) throws {
+    guard duration >= 0.01, duration.isFinite else { throw ValidationError("--duration must be 0.01 or more.") }
+}
+
+private func checkVelocity(_ velocity: Int) throws {
+    guard (1...127).contains(velocity) else { throw ValidationError("--velocity must be 1 to 127.") }
+}
+
+/// `end` and `bounds` are in quarter notes from the beginning of the file.
+private func checkInside(end: Double, of bounds: (start: Double, end: Double)) throws {
+    guard end <= bounds.end + 1e-6 else {
+        let length = (bounds.end - bounds.start).formatted()
+        throw DownbeatError("The note must end by beat \(length), the end of the region.")
     }
 }

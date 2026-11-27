@@ -88,14 +88,20 @@ public final class MIDIFile {
         }
     }
 
+    /// The note with this listing id.
+    public func note(id: Int) throws -> Note {
+        let listed = try listedNotes()
+        guard listed.indices.contains(id - 1) else {
+            let count = "\(listed.count) \(listed.count == 1 ? "note" : "notes")"
+            throw LayoutError(description: "no note has id \(id); the region has \(count)")
+        }
+        return listed[id - 1]
+    }
+
     /// Deletes the note with this id and returns it.
     @discardableResult
     public func deleteNote(id: Int) throws -> Note {
-        let listed = try listedNotes()
-        guard listed.indices.contains(id - 1) else {
-            throw LayoutError(description: "no note has id \(id); the region has \(listed.count) notes")
-        }
-        let target = listed[id - 1]
+        let target = try note(id: id)
         var track: MusicTrack?
         try check(MusicSequenceGetIndTrack(sequence, UInt32(target.track), &track), "MusicSequenceGetIndTrack")
         var deleted = false
@@ -106,6 +112,26 @@ public final class MIDIFile {
             return deleted
         }
         return target
+    }
+
+    /// Changes the given parts of a note, keeping its channel and release velocity.
+    /// Returns false when nothing differs. After a throw the file may lack the note, so discard it.
+    public func updateNote(
+        id: Int, pitch: Int? = nil, beat: Double? = nil, duration: Double? = nil, velocity: Int? = nil
+    ) throws -> Bool {
+        let old = try note(id: id)
+        let newPitch = pitch ?? Int(old.pitch)
+        let newBeat = beat ?? old.beat
+        let newDuration = duration ?? old.duration
+        let newVelocity = velocity ?? Int(old.velocity)
+        guard newPitch != Int(old.pitch) || abs(newBeat - old.beat) > 1e-6
+                || abs(newDuration - old.duration) > 1e-6 || newVelocity != Int(old.velocity) else { return false }
+        try deleteNote(id: id)
+        try addNote(
+            pitch: newPitch, beat: newBeat, duration: newDuration, velocity: newVelocity,
+            channel: old.channel, releaseVelocity: old.releaseVelocity
+        )
+        return true
     }
 
     /// Makes sure something marks the start and the last tick, so that removing events
@@ -121,7 +147,9 @@ public final class MIDIFile {
 
     /// Adds one note. `beat` and `duration` are in quarter notes, `beat` from the start of the file.
     /// Throws if it would overlap a note of the same pitch and channel.
-    public func addNote(pitch: Int, beat: Double, duration: Double, velocity: Int, channel: Int) throws {
+    public func addNote(
+        pitch: Int, beat: Double, duration: Double, velocity: Int, channel: Int, releaseVelocity: UInt8 = 64
+    ) throws {
         guard (0...127).contains(pitch), beat >= 0, duration > 0,
               (1...127).contains(velocity), (1...16).contains(channel) else {
             throw LayoutError(description: "the note is out of range")
@@ -140,7 +168,7 @@ public final class MIDIFile {
         try check(MusicSequenceGetIndTrack(sequence, 0, &track), "MusicSequenceGetIndTrack")
         var message = MIDINoteMessage(
             channel: UInt8(channel - 1), note: UInt8(pitch), velocity: UInt8(velocity),
-            releaseVelocity: 64, duration: Float32(duration)
+            releaseVelocity: releaseVelocity, duration: Float32(duration)
         )
         try check(MusicTrackNewMIDINoteEvent(track!, beat, &message), "MusicTrackNewMIDINoteEvent")
     }

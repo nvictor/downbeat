@@ -209,3 +209,29 @@ func refusesBadPitches(text: String) {
     #expect(smf.hasSizingEvent(atTick: 0))
     #expect(smf.hasSizingEvent(atTick: end - 1))
 }
+
+@Test func updateNoteChangesOnlyTheGivenParts() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let file = try MIDIFile(contentsOf: url)
+    let before = try file.listedNotes()
+    #expect(try file.updateNote(id: 1, pitch: 62))
+    let after = try file.listedNotes()
+    #expect(after.map(\.pitch) == [62, 64])
+    #expect(after[0].beat == before[0].beat)
+    #expect(after[0].duration == before[0].duration)
+    #expect(after[0].velocity == before[0].velocity)
+    #expect(after[0].releaseVelocity == 40)
+    #expect(after[0].channel == 2)
+    #expect(after[1] == before[1])
+}
+
+@Test func updateNoteReportsNoChangeAndRefusesAnOverlap() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let file = try MIDIFile(contentsOf: url)
+    #expect(try file.updateNote(id: 2, velocity: 80) == false)
+    #expect(throws: LayoutError.self) { _ = try file.updateNote(id: 2, pitch: 60, beat: 0.1) }
+}

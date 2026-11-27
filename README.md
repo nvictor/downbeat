@@ -86,6 +86,10 @@ downbeat note add --track 1 --bar 3 --project MySong --pitch F#3 --beat 0 --dura
 downbeat note delete --track 1 --bar 3 --project MySong --id 2
 ```
 
+```bash
+downbeat note update --track 1 --bar 3 --project MySong --id 2 --pitch D3
+```
+
 - Edits replace the region. `--project` must match the front project.
 - Keep hands off keyboard and mouse while a command runs.
 - Regions with Loop, playback settings, a custom color or several MIDI channels are refused.
