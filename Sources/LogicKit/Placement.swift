@@ -31,40 +31,96 @@ extension LogicApp {
 
     /// Replaces the selected region with the content of a MIDI file:
     /// import at the same bar, move the new region to the original track, remove the extra track.
+    /// If a step fails, the finished ones are undone.
     public func replaceSelectedRegion(with url: URL, at target: Placement) throws {
-        let original = try tracks()
-        try movePlayhead(toBar: target.startBar)
-        try importMIDI(from: url)
+        let original = try layout()
+        let trackCount = try tracks().count
+        var changes = 0
 
-        let imported = try selectedPlacement()
-        guard imported.track != target.track,
-              imported.startBar == target.startBar, imported.endBar == target.endBar else {
-            throw LogicError("Imported region is at \(imported), expected bars \(target.startBar) to \(target.endBar). Undo in Logic Pro.")
+        /// Runs one undoable step, counting it if it changed anything, even when it then failed.
+        func step(_ action: () throws -> Void) throws {
+            let before = try layout()
+            do {
+                try action()
+            } catch {
+                if (try? layout()) != before { changes += 1 }
+                throw error
+            }
+            changes += 1
         }
 
-        try choose(["Edit", "Cut"])
-        try wait("the imported region to be cut") {
-            try regions(on: imported.track).isEmpty ? true : nil
-        }
+        do {
+            try movePlayhead(toBar: target.startBar)
+            try step { try importMIDI(from: url) }
 
-        try select(regionStartingAt: target.startBar, on: target.track)
-        let count = try regions(on: target.track).count
-        try choose(["Edit", "Delete"])
-        try wait("the original region to be deleted") {
-            try regions(on: target.track).count == count - 1 ? true : nil
-        }
+            let imported = try selectedPlacement()
+            guard imported.track != target.track,
+                  imported.startBar == target.startBar, imported.endBar == target.endBar else {
+                throw LogicError("""
+                    Imported region is on \(imported.track), bars \(imported.startBar) to \(imported.endBar), \
+                    expected bars \(target.startBar) to \(target.endBar).
+                    """)
+            }
 
-        try select(track: target.track)
-        try movePlayhead(toBar: target.startBar)
-        try choose(["Edit", "Paste"])
-        try wait("the region to be pasted on \(target.track)") {
-            try regions(on: target.track).count == count ? true : nil
-        }
+            try step {
+                try choose(["Edit", "Cut"])
+                try wait("the imported region to be cut") {
+                    try regions(on: imported.track).isEmpty ? true : nil
+                }
+            }
 
-        try select(track: imported.track)
-        try choose(["Track", "Delete Track"])
-        try wait("the extra track to be removed") {
-            try tracks().count == original.count ? true : nil
+            try select(regionStartingAt: target.startBar, on: target.track)
+            let count = try regions(on: target.track).count
+            try step {
+                try choose(["Edit", "Delete"])
+                try wait("the original region to be deleted") {
+                    try regions(on: target.track).count == count - 1 ? true : nil
+                }
+            }
+
+            try select(track: target.track)
+            try movePlayhead(toBar: target.startBar)
+            try step {
+                try choose(["Edit", "Paste"])
+                try wait("the region to be pasted on \(target.track)") {
+                    try regions(on: target.track).count == count ? true : nil
+                }
+            }
+
+            try select(track: imported.track)
+            try step {
+                try choose(["Track", "Delete Track"])
+                try wait("the extra track to be removed") {
+                    try tracks().count == trackCount ? true : nil
+                }
+            }
+        } catch {
+            guard changes > 0 else { throw error }
+            do {
+                try undo(changes)
+                guard try layout() == original else { throw LogicError("The tracks differ.") }
+            } catch let undoError {
+                throw LogicError("""
+                    \(error)
+                    Could not restore the project (\(undoError)). Use Undo in Logic Pro.
+                    """)
+            }
+            throw LogicError("\(error)\nThe \(changes) finished steps were undone.")
+        }
+    }
+
+    /// Track names and region positions, without the selection.
+    private func layout() throws -> [[String]] {
+        try tracks().map { track in
+            [track.name] + track.regions.map { "\($0.name ?? "") \($0.help ?? "")" }
+        }
+    }
+
+    private func undo(_ count: Int) throws {
+        for _ in 0..<count {
+            let before = try layout()
+            try chooseUndo()
+            try wait("Undo to take effect") { try layout() != before ? true : nil }
         }
     }
 
@@ -79,6 +135,16 @@ extension LogicApp {
             throw LogicError("\(description) was not found in \(group).")
         }
         return found
+    }
+
+    /// Every lane of the Tracks area.
+    private func lanes() throws -> [AXElement] {
+        guard let contents = projectWindow?.element.first(where: {
+            $0.role == kAXGroupRole && $0.string(kAXDescriptionAttribute) == "Tracks contents"
+        }) else {
+            throw LogicError("The Tracks area was not found.")
+        }
+        return contents.children
     }
 
     private func select(track: String) throws {
@@ -110,14 +176,22 @@ extension LogicApp {
         }
     }
 
-    private func select(regionStartingAt bar: Int, on track: String) throws {
+    func select(regionStartingAt bar: Int, on track: String) throws {
         let lane = try element(inGroup: "Tracks contents", described: track)
         guard let region = lane.children.first(where: {
             $0.string(kAXHelpAttribute).flatMap(Self.bars)?.start == bar
         }) else {
             throw LogicError("No region starts at bar \(bar) on \(track).")
         }
-        try region.set(kAXSelectedAttribute, to: kCFBooleanTrue)
+        // Selecting adds to the selection, so clear it on every other region first.
+        for other in try lanes().flatMap(\.children)
+        where other.bool(kAXSelectedAttribute) == true && !other.isSame(as: region) {
+            try other.set(kAXSelectedAttribute, to: kCFBooleanFalse)
+        }
+        // Setting an already selected region again deselects it.
+        if region.bool(kAXSelectedAttribute) != true {
+            try region.set(kAXSelectedAttribute, to: kCFBooleanTrue)
+        }
         try wait("only the original region to be selected") {
             let placement = try? selectedPlacement()
             return placement?.track == track && placement?.startBar == bar ? true : nil

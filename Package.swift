@@ -22,5 +22,6 @@ let package = Package(
             ]
         ),
         .testTarget(name: "MIDIKitTests", dependencies: ["MIDIKit"]),
+        .testTarget(name: "LogicKitTests", dependencies: ["LogicKit"]),
     ]
 )

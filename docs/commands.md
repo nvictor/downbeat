@@ -3,15 +3,18 @@
 ## Implemented
 
 ```
-logic check [--json]                    # setup check (ChatGPT: doctor)
-logic inspect [--menus] [--json]        # accessibility tree
-logic spike tracks                      # visible tracks and regions
-logic spike export <out.mid>            # selected region
-logic spike import <in.mid>             # onto a new track
-logic spike replace <in.mid>            # selected region, same track and bars
-logic spike transpose <in> <out> --semitones n
-logic spike diff <a.mid> <b.mid>
+logic check [--json]
+logic inspect [--menus] [--json]
+logic region list [--track t] [--json]
+logic region export <region> --output <file.mid>
+logic region import <file.mid> <region> --project <name>     # replaces the region
+logic note list <region> [--json]
+logic note transpose <region> --project <name> --semitones n
+logic note velocity <region> --project <name> --value n
+logic note quantize <region> --project <name> --division 1/16
 ```
+
+`<region>` is any of `--region <name>`, `--track <name|number>`, `--bar n`, matching one region.
 
 ## Planned
 
@@ -38,7 +41,7 @@ logic project info
 logic tempo get
 logic tempo set 120
 
-# tracks (V1)
+# tracks
 logic track list [--json]
 logic track select "Drums"
 logic track create --type instrument --name "Bass"
@@ -55,31 +58,19 @@ logic marker create "Intro" --bar 1
 # MIDI files
 logic midi import drums.mid
 
-# regions (V1)
-logic region list --track "Drums"
+# regions
 logic region create --track "Drums" --bar 1 --bars 4
 logic region delete "Verse"
 logic region rename "Verse" "Intro"
 logic region duplicate "Intro" --bar 5
 logic region move "Intro" --bar 9
-logic region export "Intro" --output intro.mid
-logic region import intro.mid --track "Drums" --bar 1
 
-# notes (V1)
-logic note list --region "Intro" [--json]
+# notes
 logic note add --region "Intro" --pitch C4 --beat 1 --duration 0.5 --velocity 100
 logic note delete --region "Intro" --id 12
 logic note update --region "Intro" --id 12 --pitch D4
-logic note transpose --region "Intro" --semitones 2
-logic note quantize --region "Intro" --division 1/16
-logic note velocity --region "Intro" --value 100
 logic note export --region "Intro" > notes.json
 logic note import --region "Intro" notes.json
-swift build
-swift test
-swift run logic check
-swift run logic inspect --tree --depth 6
-swift run logic spike export /tmp/logic-cli/before.mid
 ```
 
 ## Also deferred
@@ -89,7 +80,6 @@ swift run logic spike export /tmp/logic-cli/before.mid
 - Plugin management
 - Audio editing
 - Homebrew distribution
-- `SKILL.md`, in `~/Developer/skills/logic-cli`
 - GUS, MEL and HAL integration
 
 ## Rules

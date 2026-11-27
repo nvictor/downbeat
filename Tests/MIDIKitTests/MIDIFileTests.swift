@@ -99,10 +99,54 @@ private func meaningful(_ smf: SMF) -> [SMFEvent] {
     #expect(before.differences(from: before).removed.isEmpty)
 }
 
-@Test func extendAddsOneTextEventBeforeTheTick() throws {
-    let (before, after) = try roundTrip { try $0.extend(toTick: 3840) }
+@Test func addMarkerAddsOneTextEvent() throws {
+    let (before, after) = try roundTrip { try $0.addMarker(atTick: 3839) }
     let changes = before.differences(from: after)
     #expect(changes.removed.isEmpty)
     #expect(changes.added.map(\.tick) == [3839])
     #expect(changes.added.first?.bytes == [0xFF, 0x01, 0x2E])
 }
+
+@Test func prepareForImportMarksBothEndsOnce() throws {
+    let input = temporaryURL()
+    let first = temporaryURL()
+    let second = temporaryURL()
+    defer { [input, first, second].forEach { try? FileManager.default.removeItem(at: $0) } }
+    // Starts with a name only, ends with an empty stretch.
+    let body: [UInt8] = [
+        0x00, 0xFF, 0x03, 0x01, 0x41,
+        0x83, 0x60, 0x90, 0x3C, 0x50,
+        0x81, 0x70, 0x80, 0x3C, 0x40,
+        0x81, 0x70, 0xFF, 0x2F, 0x00,
+    ]
+    let header: [UInt8] = Array("MThd".utf8) + [0, 0, 0, 6, 0, 0, 0, 1, 0x01, 0xE0]
+    try Data(header + Array("MTrk".utf8) + [0, 0, 0, UInt8(body.count)] + body).write(to: input)
+    try MIDIFile.prepareForImport(input, to: first)
+    try MIDIFile.prepareForImport(first, to: second)
+    let markers = try SMF(data: Data(contentsOf: second)).events.filter { $0.bytes.starts(with: [0xFF, 0x01]) }
+    #expect(markers.map(\.tick).sorted() == [0, 959])
+}
+
+@Test func setVelocityChangesEveryNote() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let file = try MIDIFile(contentsOf: url)
+    #expect(try file.setVelocity(100) == 1)
+    #expect(try file.notes().map(\.velocity) == [100, 100])
+    #expect(throws: LayoutError.self) { try file.setVelocity(0) }
+}
+
+@Test func quantizeMovesStartsAndKeepsTheRest() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let file = try MIDIFile(contentsOf: url)
+    let before = try file.notes()
+    #expect(try file.quantize(grid: 0.25, origin: 0, end: 4) > 0)
+    let after = try file.notes()
+    #expect(after.map(\.pitch) == before.map(\.pitch))
+    #expect(after.map(\.releaseVelocity) == before.map(\.releaseVelocity))
+    #expect(after.allSatisfy { abs(($0.beat / 0.25).rounded() * 0.25 - $0.beat) < 1e-6 })
+}
+

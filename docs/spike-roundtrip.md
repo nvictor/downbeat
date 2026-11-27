@@ -11,7 +11,7 @@ Environment: Logic Pro 13.0, macOS 27.2.1, Swift 6.4.2, English UI.
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
 
-## The sequence (`logic spike replace`)
+## The replace sequence
 
 1. Read the selected region's track, start bar and end bar.
 2. Add a text event on the last tick of the file, to fix the region length.
@@ -21,6 +21,8 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 6. Select the original region, `Edit > Delete`.
 7. Select the original track, `Edit > Paste` at the start bar.
 8. Click the extra track's header, `Track > Delete Track`.
+
+If a step fails, the finished steps are undone. Tested with failures injected after Cut and after Paste.
 
 ## Preserved or lost
 
@@ -35,10 +37,13 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Region name | Preserved in the test, where it matched the file's track name. |
 | Tempo in the file | AudioToolbox rounds it by 1 microsecond per quarter. The import does not change the project tempo. |
 | Text event added for length | Stays in the region. |
-| Color, loop, region parameters (quantize, transpose), automation | Not tested. The region is new, so expect loss. |
+| Transpose, velocity offset, quantize (region settings) | **Baked into the export.** The notes carry the result. The new region has no settings. |
+| Loop | The export contains every repeat (64 tracks in the test). Refused. |
+| Color, automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
-| Meters other than 4/4, several regions on a track | Not tested. |
+| 3/4 | Preserved. Other meters not tested. |
+| Several regions on a track | The other region is untouched (identical export). |
 
 ## Pitch bend growth (fixed)
 
@@ -48,7 +53,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
   - 60 ticks apart or less: filled in. 240 ticks apart: left alone. Between them: not tested.
   - Ramps are filled on a 1/256 note grid (7.5 ticks at 480). Closer events get a midpoint.
   - Not checked whether it happens on import or on export.
-- Fix: `logic spike export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
+- Fix: `logic region export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
 - Side effects
   - Real recorded data that dense, on a straight line, is thinned too.
   - Events 8 to 60 ticks apart are filled to the 1/256 grid by the first pass.
@@ -62,6 +67,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
 - Export writes a format 0 file with absolute project positions. End of track is the region end.
 - Import creates a new track and places the region at the playhead bar.
 - Import ignores the end-of-track marker. The last event sets the length.
+- A file without a track name gives a region named after the added text event (`.`).
 - `Undo` restored the original exactly (identical export).
 
 ## Automation notes
@@ -72,6 +78,8 @@ Without a fix the count grew on each pass: 215, 428, 854.
 | `CGEvent` `Cmd+Shift+G` had no effect, with the menu open. | System Events keys, guarded by a front-app check. `CGEvent` was not retested after the menu fix. |
 | Accessibility selection of a track header reports success and changes nothing. | Mouse click, after checking what is under the point. |
 | Playhead sliders move one step per write. | Write until the value matches. |
+| Menu items stay disabled until their menu has opened. | Open and close the menu when an item looks disabled. |
+| Selecting an already selected region deselects it. Selecting another one adds to the selection. | Clear the others, then select only if needed. |
 | Floating editors report the dialog subrole. | Detect blocking dialogs by modality. |
 
 ## AudioToolbox
@@ -80,10 +88,13 @@ Without a fix the count grew on each pass: 215, 428, 854.
 - Channel events are kept, including pitch bend, pressure, program change and release velocity.
 - Saving an exported file drops nothing, apart from the thinning above.
 
-## Next
+## After the spike
 
-- Test region color, loop and parameters.
-- Decide how to restore a failed replace (today: `Undo` by hand).
+- The `spike` commands became `logic region` and `logic note`. The sequence above is `logic region import`.
+- Regions with Loop or playback settings are refused, read from the Region inspector.
+- A text event at the region start keeps an empty first bar. Without it, Logic Pro drops the bar.
+- Verified live: note list, transpose, velocity, quantize, region export and import, refusals.
+- Open: region color.
 
 ## Scratch project
 

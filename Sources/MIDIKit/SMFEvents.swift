@@ -20,9 +20,16 @@ public struct SMF: Sendable {
     public let ticksPerQuarter: Int
     public let events: [SMFEvent]
 
-    /// The tick of the latest end-of-track marker.
-    public var endTick: Int {
-        events.filter { $0.bytes.starts(with: [0xFF, 0x2F]) }.map(\.tick).max() ?? 0
+    /// For a file exported by Logic Pro: the region starts at the first event
+    /// and ends at the latest end-of-track marker.
+    public var bounds: (start: Int, end: Int) {
+        let ends = events.filter { $0.bytes.starts(with: [0xFF, 0x2F]) }.map(\.tick)
+        return (events.map(\.tick).min() ?? 0, ends.max() ?? 0)
+    }
+
+    /// True if a channel event or a text event sits on `tick`.
+    func hasSizingEvent(atTick tick: Int) -> Bool {
+        events.contains { $0.tick == tick && ($0.bytes[0] < 0xF0 || $0.bytes.starts(with: [0xFF, 0x01])) }
     }
 
     public struct ParseError: Error, CustomStringConvertible {

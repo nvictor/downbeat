@@ -2,7 +2,7 @@
 
 A command line tool for Logic Pro. V1 targets MIDI region and note editing.
 
-Status: round-trip spike done, go with limits. See [docs/spike-roundtrip.md](docs/spike-roundtrip.md).
+Status: V1 commands work on Logic Pro 13.0. Findings and limits: [docs/spike-roundtrip.md](docs/spike-roundtrip.md).
 
 ## Requirements
 
@@ -24,31 +24,35 @@ install -m 755 .build/release/logic ~/.local/bin/logic
 ## Usage
 
 ```bash
-swift run logic check
+logic check
 ```
 
 ```bash
-swift run logic inspect --tree --depth 6
+logic region list
 ```
-
-`logic spike` commands are throwaway experiments. Run them on a scratch project only (`RoundTrip` by default).
-Keep hands off keyboard and mouse while they run.
 
 ```bash
-swift run logic spike export /tmp/logic-cli/before.mid
+logic note list --track 1 --bar 3
 ```
 
-Export removes the extra pitch bend points Logic Pro adds to ramps.
+Editing replaces the region. `--project` must match the front project.
+Keep hands off keyboard and mouse while a command runs.
 
 ```bash
-swift run logic spike transpose /tmp/logic-cli/before.mid /tmp/logic-cli/edited.mid --semitones 2
+logic note transpose --track 1 --bar 3 --project RoundTrip --semitones=-2
 ```
-
-Replace the selected region with the edited file. If it stops midway, use Undo in Logic Pro.
 
 ```bash
-swift run logic spike replace /tmp/logic-cli/edited.mid
+logic region export --track 1 --bar 3 --output /tmp/part.mid
 ```
+
+```bash
+logic region import /tmp/part.mid --track 1 --bar 3 --project RoundTrip
+```
+
+Regions with Loop or playback settings are refused.
+
+The agent skill lives in `~/Developer/skills/logic-cli`.
 
 ## Commands
 

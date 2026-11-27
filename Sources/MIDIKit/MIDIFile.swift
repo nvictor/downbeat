@@ -92,14 +92,13 @@ public final class MIDIFile {
         }
     }
 
-    /// Adds an empty-looking text event just before `tick`. Logic Pro ignores the
-    /// end-of-track marker and sizes an imported region by its last event.
-    public func extend(toTick tick: Int) throws {
-        guard tick > 0 else { return }
+    /// Adds a short text event at `tick`. Logic Pro sizes an imported region by its
+    /// first and last events, counting text events but not names or the end-of-track marker.
+    public func addMarker(atTick tick: Int) throws {
         var track: MusicTrack?
         var count: UInt32 = 0
         try check(MusicSequenceGetTrackCount(sequence, &count), "MusicSequenceGetTrackCount")
-        guard count > 0 else { return }
+        guard count > 0 else { throw LayoutError(description: "the MIDI file has no tracks") }
         try check(MusicSequenceGetIndTrack(sequence, 0, &track), "MusicSequenceGetIndTrack")
 
         let text = Array(".".utf8)
@@ -114,8 +113,73 @@ public final class MIDIFile {
         event.pointee.dataLength = UInt32(text.count)
         buffer.advanced(by: offset).copyMemory(from: text, byteCount: text.count)
 
-        let beat = Double(tick - 1) / Double(try resolution())
+        let beat = Double(tick) / Double(try resolution())
         try check(MusicTrackNewMetaEvent(track!, beat, event), "MusicTrackNewMetaEvent")
+    }
+
+    /// Writes a copy of an exported region that Logic Pro imports with the same bounds.
+    public static func prepareForImport(_ source: URL, to destination: URL) throws {
+        let smf = try SMF(data: Data(contentsOf: source))
+        let file = try MIDIFile(contentsOf: source)
+        let bounds = smf.bounds
+        if !smf.hasSizingEvent(atTick: bounds.start) { try file.addMarker(atTick: bounds.start) }
+        if bounds.end > bounds.start, !smf.hasSizingEvent(atTick: bounds.end - 1) {
+            try file.addMarker(atTick: bounds.end - 1)
+        }
+        try file.save(to: destination)
+    }
+
+    /// Sets the velocity of every note. Returns the number of notes changed.
+    @discardableResult
+    public func setVelocity(_ velocity: Int) throws -> Int {
+        guard (1...127).contains(velocity) else {
+            throw LayoutError(description: "velocity must be between 1 and 127")
+        }
+        var changed = 0
+        try forEachNote { _, _, message, iterator in
+            guard message.velocity != UInt8(velocity) else { return }
+            var edited = message
+            edited.velocity = UInt8(velocity)
+            try check(
+                MusicEventIteratorSetEventInfo(iterator, kMusicEventType_MIDINoteMessage, &edited),
+                "MusicEventIteratorSetEventInfo"
+            )
+            changed += 1
+        }
+        return changed
+    }
+
+    /// Moves note starts to the nearest grid line, counted from `origin` (in quarter notes).
+    /// Notes stay inside `origin` to `end`. Returns the number of notes changed.
+    @discardableResult
+    public func quantize(grid: Double, origin: Double, end: Double) throws -> Int {
+        guard grid > 0 else { throw LayoutError(description: "the grid must be positive") }
+        var count: UInt32 = 0
+        try check(MusicSequenceGetTrackCount(sequence, &count), "MusicSequenceGetTrackCount")
+        var changed = 0
+        for index in 0..<count {
+            var track: MusicTrack?
+            try check(MusicSequenceGetIndTrack(sequence, index, &track), "MusicSequenceGetIndTrack")
+            var moved: [(beat: Double, message: MIDINoteMessage)] = []
+            // Moving events while iterating would reorder them, so remove and add them again.
+            try forEachEvent(in: track!) { _, beat, type, data, _ in
+                guard type == kMusicEventType_MIDINoteMessage else { return false }
+                var message = data.load(as: MIDINoteMessage.self)
+                var target = origin + ((beat - origin) / grid).rounded() * grid
+                if target >= end { target -= grid }
+                target = max(target, origin)
+                guard abs(target - beat) > 1e-6 else { return false }
+                message.duration = Float32(min(Double(message.duration), end - target))
+                moved.append((target, message))
+                return true
+            }
+            for note in moved {
+                var message = note.message
+                try check(MusicTrackNewMIDINoteEvent(track!, note.beat, &message), "MusicTrackNewMIDINoteEvent")
+            }
+            changed += moved.count
+        }
+        return changed
     }
 
     private func forEachNote(
@@ -175,4 +239,8 @@ public struct TransposeError: Error, CustomStringConvertible {
     public var description: String {
         "transposing by \(semitones) semitones moves a note outside 0...127"
     }
+}
+
+public struct LayoutError: Error, CustomStringConvertible {
+    public let description: String
 }
