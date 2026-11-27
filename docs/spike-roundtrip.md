@@ -39,7 +39,8 @@ If a step fails, the finished steps are undone. Tested with failures injected af
 | Text event added for length | Stays in the region. |
 | Transpose, velocity offset, quantize (region settings) | **Baked into the export.** The notes carry the result. The new region has no settings. |
 | Loop | The export contains every repeat (64 tracks in the test). Refused. |
-| Color, automation, other region settings | Not tested. The region is new, so expect loss. |
+| Custom color | Lost: the new region takes the default. Detected after the replace, which is then undone. |
+| Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
 | 3/4 | Preserved. Other meters not tested. |
@@ -94,7 +95,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
 - Regions with Loop or playback settings are refused, read from the Region inspector.
 - A text event at the region start keeps an empty first bar. Without it, Logic Pro drops the bar.
 - Verified live: note list, transpose, velocity, quantize, region export and import, refusals.
-- Open: region color.
+- A custom color is compared by the name the inspector reports, so a change of shade alone may go unnoticed.
 
 ## Scratch project
 

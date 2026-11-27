@@ -58,6 +58,14 @@ extension LogicApp {
         }
     }
 
+    /// The color name the Region inspector reports for the selected region.
+    func regionColor() throws -> String {
+        try showRegionInspector()
+        return try wait("the region color", seconds: 3) {
+            try inspectorControls().first { $0.label == "Color" }?.value
+        }
+    }
+
     private func showRegionInspector() throws {
         guard let window = projectWindow?.element else { throw LogicError("Open a project.") }
         if regionInspector == nil {

@@ -35,6 +35,7 @@ extension LogicApp {
     public func replaceSelectedRegion(with url: URL, at target: Placement) throws {
         let original = try layout()
         let trackCount = try tracks().count
+        let color = try regionColor()
         var changes = 0
 
         /// Runs one undoable step, counting it if it changed anything, even when it then failed.
@@ -93,6 +94,12 @@ extension LogicApp {
                 try wait("the extra track to be removed") {
                     try tracks().count == trackCount ? true : nil
                 }
+            }
+
+            // The new region gets the default color, so a custom one cannot be kept.
+            try select(regionStartingAt: target.startBar, on: target.track)
+            guard (try? wait("the color", seconds: 3, { try regionColor() == color ? true : nil })) != nil else {
+                throw LogicError("The region has a custom color (\(color)), which cannot survive a round trip.")
             }
         } catch {
             guard changes > 0 else { throw error }

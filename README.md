@@ -34,13 +34,12 @@ logic note transpose --track 1 --bar 3 --project MySong --semitones=-2
 
 - Edits replace the region. `--project` must match the front project.
 - Keep hands off keyboard and mouse while a command runs.
-- Regions with Loop or playback settings are refused.
+- Regions with Loop, playback settings or a custom color are refused.
 
 ## More
 
 - [Commands](docs/commands.md)
 - [How it works and limits](docs/spike-roundtrip.md)
-- [Plan](PLAN.md)
 
 ## License
 
