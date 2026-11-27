@@ -1,15 +1,8 @@
 # logic-cli
 
-A command line tool for Logic Pro. V1 targets MIDI region and note editing.
+Edit MIDI regions in Logic Pro from the command line.
 
-Status: V1 commands work on Logic Pro 13.0. Findings and limits: [docs/spike-roundtrip.md](docs/spike-roundtrip.md).
-
-## Requirements
-
-- macOS 15 or later
-- Logic Pro, English UI
-- Accessibility permission for the app that runs `logic`
-- Automation permission for System Events
+Needs macOS 15+, Logic Pro (English), and Accessibility and Automation permissions.
 
 ## Install
 
@@ -21,7 +14,7 @@ swift build -c release
 install -m 755 .build/release/logic ~/.local/bin/logic
 ```
 
-## Usage
+## Use
 
 ```bash
 logic check
@@ -35,29 +28,20 @@ logic region list
 logic note list --track 1 --bar 3
 ```
 
-Editing replaces the region. `--project` must match the front project.
-Keep hands off keyboard and mouse while a command runs.
-
 ```bash
-logic note transpose --track 1 --bar 3 --project RoundTrip --semitones=-2
+logic note transpose --track 1 --bar 3 --project MySong --semitones=-2
 ```
 
-```bash
-logic region export --track 1 --bar 3 --output /tmp/part.mid
-```
+- Edits replace the region. `--project` must match the front project.
+- Keep hands off keyboard and mouse while a command runs.
+- Regions with Loop or playback settings are refused.
 
-```bash
-logic region import /tmp/part.mid --track 1 --bar 3 --project RoundTrip
-```
+## More
 
-Regions with Loop or playback settings are refused.
-
-The agent skill lives in `~/Developer/skills/logic-cli`.
-
-## Commands
-
-Implemented and planned: [docs/commands.md](docs/commands.md).
+- [Commands](docs/commands.md)
+- [How it works and limits](docs/spike-roundtrip.md)
+- [Plan](PLAN.md)
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE)
