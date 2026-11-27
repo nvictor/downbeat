@@ -1,6 +1,3 @@
 # Plan
 
-## Later
-
-- [ ] Audio editing
-  - [ ] `region split` and `region join`
+No commands are planned.

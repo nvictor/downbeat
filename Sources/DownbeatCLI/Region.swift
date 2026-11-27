@@ -3,11 +3,13 @@ import Foundation
 import DownbeatKit
 import MIDIKit
 
+extension CrossingNotes: ExpressibleByArgument {}
+
 struct Region: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "List, create, rename, move, duplicate, export, import and delete regions.",
+        abstract: "List, create, rename, move, duplicate, split, join, export, import and delete regions.",
         subcommands: [
-            List.self, Create.self, Rename.self, Move.self, Duplicate.self,
+            List.self, Create.self, Rename.self, Move.self, Duplicate.self, Split.self, Join.self,
             Export.self, Import.self, Delete.self,
         ]
     )
@@ -153,6 +155,42 @@ struct Region: ParsableCommand {
         func run() throws {
             let copy = try target.app().duplicateRegion(options.reference, toBar: toBar)
             print("Copied to bars \(copy.startBar) to \(copy.endBar).")
+        }
+    }
+
+    struct Split: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Split a region at the start of a bar inside it. Does not save the project."
+        )
+
+        @OptionGroup var options: RegionOptions
+
+        @Option(help: "Bar where the second part starts.")
+        var atBar: Int
+
+        @Option(help: "For MIDI notes that cross the split: keep, shorten or split.")
+        var notes: CrossingNotes = .keep
+
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            try target.app().splitRegion(options.reference, atBar: atBar, notes: notes)
+            print("Split at bar \(atBar).")
+        }
+    }
+
+    struct Join: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Join a region with the one that follows it on its track. Does not save the project.",
+            discussion: "The two must touch. Joins that need a new audio file are refused."
+        )
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            let joined = try target.app().joinRegion(options.reference)
+            print("The region now covers bars \(joined.startBar) to \(joined.endBar).")
         }
     }
 

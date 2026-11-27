@@ -39,6 +39,8 @@ downbeat region create --track t --bar n [--bars 1] [--name n] --project <name>
 downbeat region rename <new name> <region> --project <name>
 downbeat region move <region> --to-bar n --project <name>
 downbeat region duplicate <region> --to-bar n --project <name>
+downbeat region split <region> --at-bar n [--notes keep|shorten|split] --project <name>
+downbeat region join <region> --project <name>                  # with the next one
 downbeat region export <region> --output <file.mid>
 downbeat region import <file.mid> <region> --project <name>     # replaces the region
 downbeat region delete <region> --project <name>

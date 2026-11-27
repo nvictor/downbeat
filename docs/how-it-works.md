@@ -151,6 +151,23 @@ Neither command is tested with automation.
 - Tested on audio regions starting on a bar line and ending inside a bar. The moved audio was checked in an export.
 - Not tested: a region starting inside a bar.
 
+## Split and join
+
+Both use the `Edit` menu of the Tracks area. The menu bar has neither command.
+
+`downbeat region split` cuts at the first beat of a bar inside the region.
+
+- `--notes` answers Logic's question about MIDI notes crossing the cut. Default: `keep`.
+- `keep`: the note stays in the first part. Exports and `note list` clip it at the region end.
+- `shorten`: the note ends at the cut.
+- `split`: Logic then exports the second part of the note with no length. downbeat refuses to read or edit that region.
+
+`downbeat region join` joins a region with the next one on its track, when they touch.
+
+- Refused when Logic asks a question first, as for audio that needs a new file. That case was not tested.
+- The first region's name is restored if Logic changes it.
+- Tested: MIDI regions, and audio split and joined again.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

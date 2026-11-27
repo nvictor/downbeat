@@ -126,6 +126,16 @@ downbeat audio import take.wav --track "Vocals" --bar 5 --project "Night Drive"
 downbeat audio export --track "Vocals" --output vocals.wav
 ```
 
+## Split and join
+
+```bash
+downbeat region split --region "Chorus" --at-bar 13 --project "Night Drive"
+```
+
+```bash
+downbeat region join --region "Chorus" --bar 9 --project "Night Drive"
+```
+
 ## Edit notes
 
 ```bash

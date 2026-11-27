@@ -183,24 +183,28 @@ extension LogicApp {
             try paste(on: target, expecting: count, step: step)
             try requireRegion(at: target)
         }
-        // Logic Pro numbers a pasted audio region anew, so give it back its name.
-        if try regionName(startingIn: target.startBar, on: target.track) != name {
-            do {
-                _ = try renameRegion(
-                    RegionReference(
-                        name: nil, track: Self.trackParts(target.track).number.map(String.init),
-                        bar: target.startBar
-                    ),
-                    to: name
-                )
-            } catch {
-                throw DownbeatError("The region moved to bar \(bar) but kept a new name. \(error)")
-            }
-        }
+        // Logic Pro numbers a pasted audio region anew.
+        try restoreName(name, of: target, after: "moved")
         return target
     }
 
-    private func regionName(startingIn bar: Int, on track: String) throws -> String {
+    /// Renames the region at `placement` back when Logic Pro gave it another name.
+    func restoreName(_ name: String, of placement: Placement, after change: String) throws {
+        guard try regionName(startingIn: placement.startBar, on: placement.track) != name else { return }
+        do {
+            _ = try renameRegion(
+                RegionReference(
+                    name: nil, track: Self.trackParts(placement.track).number.map(String.init),
+                    bar: placement.startBar
+                ),
+                to: name
+            )
+        } catch {
+            throw DownbeatError("The region was \(change) but has a new name. \(error)")
+        }
+    }
+
+    func regionName(startingIn bar: Int, on track: String) throws -> String {
         guard let region = try regions(on: track).first(where: {
             $0.help.flatMap(Self.position)?.startBar == bar
         }) else {
@@ -250,9 +254,9 @@ extension LogicApp {
     }
 
     /// Runs one undoable step, counting it if it changed anything, even when it then failed.
-    private typealias Step = (() throws -> Void) throws -> Void
+    typealias Step = (() throws -> Void) throws -> Void
 
-    private func undoingOnFailure(_ body: (Step) throws -> Void) throws {
+    func undoingOnFailure(_ body: (Step) throws -> Void) throws {
         let original = try layout()
         var changes = 0
         do {
@@ -356,7 +360,7 @@ extension LogicApp {
         }
     }
 
-    private func regions(on track: String) throws -> [Region] {
+    func regions(on track: String) throws -> [Region] {
         try tracks().first { $0.name == track }?.regions ?? []
     }
 
@@ -411,6 +415,22 @@ extension LogicApp {
         try wait("only the original region to be selected") {
             let placement = try? selectedPlacement()
             return placement?.track == track && placement?.startBar == bar ? true : nil
+        }
+    }
+
+    /// Selects a region as well as the ones already selected.
+    func addToSelection(regionStartingAt bar: Int, on track: String) throws {
+        let lane = try element(inGroup: "Tracks contents", described: track)
+        guard let region = lane.children.first(where: {
+            $0.string(kAXHelpAttribute).flatMap(Self.position)?.startBar == bar
+        }) else {
+            throw DownbeatError("No region starts in bar \(bar) on \(track).")
+        }
+        if region.bool(kAXSelectedAttribute) != true {
+            try region.set(kAXSelectedAttribute, to: kCFBooleanTrue)
+        }
+        try wait("two regions to be selected") {
+            try tracks().flatMap(\.regions).filter(\.selected).count == 2 ? true : nil
         }
     }
 

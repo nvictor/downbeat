@@ -42,6 +42,13 @@ extension LogicApp {
         try requireAudibleSelection()
         try exportSelection(to: url)
         let file = try MIDIFile(contentsOf: url)
+        guard try !file.notes().contains(where: { $0.duration <= 0 }) else {
+            try? FileManager.default.removeItem(at: url)
+            throw DownbeatError("""
+                Logic Pro exported a note with no length, which an edit would write back. This follows \
+                a split of a crossing note. Fix the note in Logic Pro, or join the parts again.
+                """)
+        }
         if try file.thinPitchBend() > 0 { try file.save(to: url) }
         return placement
     }
