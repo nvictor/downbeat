@@ -8,7 +8,7 @@ downbeat check [--json]
 downbeat inspect [--menus] [--json]
 downbeat status [--json]
 downbeat project new <name> [--tempo n] [--signature 6/8] [--key "A minor"] [--directory d] [--template t]
-downbeat project template <path.logicx> [--replace]
+downbeat project template [<path.logicx> [--replace]]
 downbeat project open <path.logicx>
 downbeat project save --project <name>
 downbeat project info [--json]

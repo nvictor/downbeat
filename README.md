@@ -39,6 +39,12 @@ Once: save an empty project in Logic Pro, then keep it as the template.
 downbeat project template ~/Music/Logic/Blank.logicx
 ```
 
+Show where the current template is kept:
+
+```bash
+downbeat project template
+```
+
 Then:
 
 ```bash

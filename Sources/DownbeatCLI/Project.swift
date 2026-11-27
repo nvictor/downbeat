@@ -113,19 +113,29 @@ struct Project: ParsableCommand {
 
     struct Template: ParsableCommand {
         static let configuration = CommandConfiguration(
-            abstract: "Keep a copy of a saved project as the default template."
+            abstract: "Show the default template, or set it from a saved project."
         )
 
-        @Argument(help: "A saved .logicx project.")
-        var path: String
+        @Argument(help: "A saved .logicx project to keep a copy of. Leave out to show the current template.")
+        var path: String?
 
         @Flag(help: "Replace the current template.")
         var replace = false
 
+        func validate() throws {
+            if replace && path == nil { throw ValidationError("--replace needs a path.") }
+        }
+
         func run() throws {
             let destination = NewProject.defaultTemplate
-            let source = fileURL(path)
             let files = FileManager.default
+            guard let source = path.map(fileURL) else {
+                guard files.fileExists(atPath: destination.path) else {
+                    throw ValidationError("No template at \(destination.path). Set one with a .logicx path.")
+                }
+                print(destination.path)
+                return
+            }
             if files.fileExists(atPath: destination.path) {
                 guard replace else { throw ValidationError("A template exists. Use --replace.") }
                 // Copy next to the old one first, so a bad source cannot destroy it.
