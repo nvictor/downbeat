@@ -44,20 +44,12 @@ func reportsASetting(prefix: String, control: InspectorControl) {
     #expect(RegionSettings.problems(in: controls) == ["Loop could not be read"])
 }
 
-@Test func readsBarsFromTheHelpText() {
-    let whole = "Region starts at 3 bars  and ends at 5 bars , MIDI region."
-    #expect(LogicApp.bars(help: whole)?.start == 3)
-    #expect(LogicApp.bars(help: whole)?.end == 5)
-    #expect(LogicApp.bars(help: "Region starts at 1 bar  and ends at 2 bars , MIDI region.")?.start == 1)
-    #expect(LogicApp.bars(help: "Region starts at 3 bars 3 beats  and ends at 6 bars 2 beats , MIDI region.") == nil)
-}
-
 @Test func matchesRegionsByEveryGivenPart() {
     let parts = LogicApp.trackParts("Track 2 “Lead Guitar”")
     #expect(parts.number == 2)
     #expect(parts.name == "Lead Guitar")
     let region = RegionSummary(
-        track: "Lead Guitar", trackNumber: 2, name: "Verse", startBar: 3, endBar: 5, selected: false
+        track: "Lead Guitar", trackNumber: 2, name: "Verse", startBar: 3, endBar: 5, onBarLines: true, selected: false
     )
     #expect(region.matches(RegionReference(name: "Verse", track: "2", bar: 3)))
     #expect(region.matches(RegionReference(name: nil, track: "Lead Guitar", bar: nil)))

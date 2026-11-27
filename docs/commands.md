@@ -54,6 +54,7 @@ downbeat note quantize <region> --project <name> --division 1/16
 ```
 
 `<region>` is any of `--region <name>`, `--track <name|number>`, `--bar n`, matching one region.
+`--bar` is the bar the region starts in. MIDI export, import and note commands need a region on bar lines.
 
 ## Planned
 

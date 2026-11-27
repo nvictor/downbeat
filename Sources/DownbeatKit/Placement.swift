@@ -3,19 +3,32 @@ import Foundation
 
 public struct Placement: Codable, Sendable {
     public let track: String
+    /// The first and the end bar the region touches.
     public let startBar: Int
     public let endBar: Int
+    /// False when the region starts or ends inside a bar.
+    var onBarLines = true
 
     var bars: Range<Int> { startBar..<endBar }
 
-    /// The same length on the same track, from another bar.
+    /// The same number of bars on the same track, from the start of another bar.
     func moved(toBar bar: Int) -> Placement {
-        Placement(track: track, startBar: bar, endBar: bar + endBar - startBar)
+        Placement(track: track, startBar: bar, endBar: bar + endBar - startBar, onBarLines: onBarLines)
     }
 }
 
+/// Where a region sits, in the bars it touches.
+struct Position: Equatable {
+    let startBar: Int
+    let endBar: Int
+    let startsOnBarLine: Bool
+    let endsOnBarLine: Bool
+
+    var onBarLines: Bool { startsOnBarLine && endsOnBarLine }
+}
+
 extension LogicApp {
-    /// The single selected region, if it starts and ends on a bar line.
+    /// The single selected region.
     public func selectedPlacement() throws -> Placement {
         let selected = try tracks().flatMap { track in
             track.regions.filter(\.selected).map { (track.name, $0) }
@@ -23,17 +36,27 @@ extension LogicApp {
         guard selected.count == 1, let (track, region) = selected.first else {
             throw DownbeatError("Select exactly one region.")
         }
-        guard let bars = region.help.flatMap(Self.bars) else {
-            throw DownbeatError("The region must start and end on a bar line.")
+        guard let position = region.help.flatMap(Self.position) else {
+            throw DownbeatError("The position of the selected region cannot be read.")
         }
-        return Placement(track: track, startBar: bars.start, endBar: bars.end)
+        return Placement(
+            track: track, startBar: position.startBar, endBar: position.endBar,
+            onBarLines: position.onBarLines
+        )
     }
 
-    static func bars(help: String) -> (start: Int, end: Int)? {
-        let pattern = /starts at (\d+) bars?\s+and ends at (\d+) bars?\s*,/
+    /// Reads help text such as `starts at 5 bars and ends at 6 bars 2 beats ,`.
+    static func position(help: String) -> Position? {
+        let pattern = /starts at (\d+) bars?([^,]*?)\s+and ends at (\d+) bars?([^,]*),/
         guard let match = help.firstMatch(of: pattern),
-              let start = Int(match.1), let end = Int(match.2) else { return nil }
-        return (start, end)
+              let start = Int(match.1), let end = Int(match.3) else { return nil }
+        // Beats, divisions or ticks after a bar number place the point inside that bar.
+        let startsOnBarLine = !match.2.contains(where: \.isNumber)
+        let endsOnBarLine = !match.4.contains(where: \.isNumber)
+        return Position(
+            startBar: start, endBar: max(endsOnBarLine ? end : end + 1, start + 1),
+            startsOnBarLine: startsOnBarLine, endsOnBarLine: endsOnBarLine
+        )
     }
 
     /// Replaces the selected region with the content of a MIDI file:
@@ -105,7 +128,8 @@ extension LogicApp {
             try paste(on: target, expecting: count + 1, step: step)
             try removeTrack(imported.track, leaving: trackCount, step: step)
             guard try regions(on: lane).contains(where: {
-                $0.help.flatMap(Self.bars).map { $0 == (bar, end) } == true
+                $0.help.flatMap(Self.position)
+                    == Position(startBar: bar, endBar: end, startsOnBarLine: true, endsOnBarLine: true)
             }) else {
                 throw DownbeatError("The new region does not cover bars \(bar) to \(end).")
             }
@@ -116,7 +140,7 @@ extension LogicApp {
     /// Copies the one region that matches to another bar of its track, with Copy and Paste,
     /// so everything about the region is kept.
     public func duplicateRegion(_ reference: RegionReference, toBar bar: Int) throws -> Placement {
-        let source = try select(reference)
+        let source = try select(reference, anyPosition: true)
         let target = source.moved(toBar: bar)
         try requireFree(bars: target.bars, onTrack: Self.trackParts(source.track).number)
         let count = try regions(on: source.track).count
@@ -135,14 +159,16 @@ extension LogicApp {
 
     /// Moves the one region that matches to another bar of its track, with Cut and Paste.
     public func moveRegion(_ reference: RegionReference, toBar bar: Int) throws -> Placement {
-        let source = try select(reference)
-        if source.startBar == bar { return source }
+        let source = try select(reference, anyPosition: true)
+        // A region that starts inside the bar still moves, to its first beat.
+        if source.startBar == bar, try startsOnBarLine(source) { return source }
         let target = source.moved(toBar: bar)
         // The region may overlap its own old bars.
         try requireFree(
             bars: target.bars, onTrack: Self.trackParts(source.track).number, ignoring: source.startBar
         )
         let count = try regions(on: source.track).count
+        let name = try regionName(startingIn: source.startBar, on: source.track)
 
         // Cut acts on the focused pane, so focus the Tracks area first.
         try select(track: source.track)
@@ -157,14 +183,49 @@ extension LogicApp {
             try paste(on: target, expecting: count, step: step)
             try requireRegion(at: target)
         }
+        // Logic Pro numbers a pasted audio region anew, so give it back its name.
+        if try regionName(startingIn: target.startBar, on: target.track) != name {
+            do {
+                _ = try renameRegion(
+                    RegionReference(
+                        name: nil, track: Self.trackParts(target.track).number.map(String.init),
+                        bar: target.startBar
+                    ),
+                    to: name
+                )
+            } catch {
+                throw DownbeatError("The region moved to bar \(bar) but kept a new name. \(error)")
+            }
+        }
         return target
     }
 
+    private func regionName(startingIn bar: Int, on track: String) throws -> String {
+        guard let region = try regions(on: track).first(where: {
+            $0.help.flatMap(Self.position)?.startBar == bar
+        }) else {
+            throw DownbeatError("No region starts in bar \(bar) on \(track).")
+        }
+        return Self.regionName(region.name ?? "")
+    }
+
+    /// Throws unless a pasted region starts where it should. One that kept its length
+    /// on bar lines must also end where it should.
     private func requireRegion(at target: Placement) throws {
         guard try regions(on: target.track).contains(where: {
-            $0.help.flatMap(Self.bars).map { $0 == (target.startBar, target.endBar) } == true
+            guard let found = $0.help.flatMap(Self.position) else { return false }
+            return found.startBar == target.startBar && found.startsOnBarLine
+                && (!target.onBarLines || found.endBar == target.endBar)
         }) else {
-            throw DownbeatError("The region does not cover bars \(target.startBar) to \(target.endBar).")
+            throw DownbeatError("The region does not start at bar \(target.startBar).")
+        }
+    }
+
+    private func startsOnBarLine(_ placement: Placement) throws -> Bool {
+        try regions(on: placement.track).contains {
+            $0.help.flatMap(Self.position).map {
+                $0.startBar == placement.startBar && $0.startsOnBarLine
+            } == true
         }
     }
 
@@ -174,7 +235,7 @@ extension LogicApp {
         for track in try tracks() where Self.trackParts(track.name).number == number {
             for region in track.regions {
                 let name = Self.regionName(region.name ?? "")
-                guard let covered = region.help.flatMap(Self.coveredBars) else {
+                guard let covered = region.help.flatMap(Self.position).map({ $0.startBar..<$0.endBar }) else {
                     throw DownbeatError("The position of \(name) cannot be read, so free space cannot be checked.")
                 }
                 if let ignoring, covered.lowerBound == ignoring { continue }
@@ -186,16 +247,6 @@ extension LogicApp {
                 }
             }
         }
-    }
-
-    /// Every bar a region touches, from its help text, also when it starts or ends inside a bar.
-    static func coveredBars(help: String) -> Range<Int>? {
-        let pattern = /starts at (\d+) bars?([^,]*?)\s+and ends at (\d+) bars?([^,]*),/
-        guard let match = help.firstMatch(of: pattern),
-              let start = Int(match.1), let end = Int(match.3) else { return nil }
-        // Beats, divisions or ticks after the end bar reach into that bar.
-        let upper = match.4.contains(where: \.isNumber) ? end + 1 : end
-        return start..<max(upper, start + 1)
     }
 
     /// Runs one undoable step, counting it if it changed anything, even when it then failed.
@@ -235,7 +286,7 @@ extension LogicApp {
         try step { try importMIDI(from: url) }
 
         let imported = try selectedPlacement()
-        guard imported.track != target.track,
+        guard imported.track != target.track, imported.onBarLines,
               imported.startBar == target.startBar, imported.endBar == target.endBar else {
             throw DownbeatError("""
                 Imported region is on \(imported.track), bars \(imported.startBar) to \(imported.endBar), \
@@ -278,7 +329,7 @@ extension LogicApp {
 
     /// Deletes the one region that matches.
     public func deleteRegion(_ reference: RegionReference) throws -> Placement {
-        let placement = try select(reference)
+        let placement = try select(reference, anyPosition: true)
         // Delete acts on the focused pane, so focus the Tracks area first.
         try select(track: placement.track)
         try select(regionStartingAt: placement.startBar, on: placement.track)
@@ -338,10 +389,15 @@ extension LogicApp {
 
     func select(regionStartingAt bar: Int, on track: String) throws {
         let lane = try element(inGroup: "Tracks contents", described: track)
-        guard let region = lane.children.first(where: {
-            $0.string(kAXHelpAttribute).flatMap(Self.bars)?.start == bar
-        }) else {
-            throw DownbeatError("No region starts at bar \(bar) on \(track).")
+        let starting = lane.children.filter {
+            $0.string(kAXHelpAttribute).flatMap(Self.position)?.startBar == bar
+        }
+        guard let region = starting.first else {
+            throw DownbeatError("No region starts in bar \(bar) on \(track).")
+        }
+        // Regions are picked by bar here, so two in one bar cannot be told apart.
+        guard starting.count == 1 else {
+            throw DownbeatError("\(starting.count) regions start in bar \(bar) on \(track).")
         }
         // Selecting adds to the selection, so clear it on every other region first.
         for other in try lanes().flatMap(\.children)

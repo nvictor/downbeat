@@ -32,7 +32,8 @@ struct Region: ParsableCommand {
             for region in regions {
                 let number = region.trackNumber.map(String.init) ?? "?"
                 let bars = region.startBar.flatMap { start in region.endBar.map { "bars \(start) to \($0)" } }
-                print("\(number)  \(region.track)  \(region.name)  \(bars ?? "off the bar lines")")
+                let note = region.onBarLines ? "" : "  (off the bar lines)"
+                print("\(number)  \(region.track)  \(region.name)  \(bars.map { $0 + note } ?? "unknown position")")
             }
         }
     }

@@ -61,7 +61,7 @@ extension LogicApp {
     /// Renames the one region that matches, through the name field of the Region inspector.
     public func renameRegion(_ reference: RegionReference, to name: String) throws -> RegionSummary {
         try Self.checkRegionName(name)
-        let placement = try select(reference)
+        let placement = try select(reference, anyPosition: true)
         let track = Self.trackParts(placement.track)
         func renamed() throws -> RegionSummary? {
             try regionSummaries().first { $0.trackNumber == track.number && $0.startBar == placement.startBar }

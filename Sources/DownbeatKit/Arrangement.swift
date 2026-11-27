@@ -30,9 +30,11 @@ public struct RegionSummary: Codable, Sendable, Equatable {
     public let track: String
     public let trackNumber: Int?
     public let name: String
-    /// Missing when the region does not start and end on a bar line.
+    /// The first and the end bar the region touches. Missing when the position cannot be read.
     public let startBar: Int?
     public let endBar: Int?
+    /// False when the region starts or ends inside a bar.
+    public let onBarLines: Bool
     public let selected: Bool
 
     func matches(_ reference: RegionReference) -> Bool {
@@ -48,10 +50,11 @@ extension LogicApp {
         try tracks().flatMap { track in
             let parts = Self.trackParts(track.name)
             return track.regions.map { region in
-                let bars = region.help.flatMap(Self.bars)
+                let position = region.help.flatMap(Self.position)
                 return RegionSummary(
                     track: parts.name, trackNumber: parts.number, name: Self.regionName(region.name ?? ""),
-                    startBar: bars?.start, endBar: bars?.end, selected: region.selected
+                    startBar: position?.startBar, endBar: position?.endBar,
+                    onBarLines: position?.onBarLines ?? false, selected: region.selected
                 )
             }
         }
@@ -69,8 +72,9 @@ extension LogicApp {
     }
 
     /// Makes the one region that matches the only selected region.
+    /// Unless `anyPosition`, the region must start and end on a bar line, as MIDI edits need.
     @discardableResult
-    public func select(_ reference: RegionReference) throws -> Placement {
+    public func select(_ reference: RegionReference, anyPosition: Bool = false) throws -> Placement {
         guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let all = try tracks()
         let matches = try regionSummaries().filter { $0.matches(reference) }
@@ -78,7 +82,7 @@ extension LogicApp {
         guard matches.count == 1 else {
             throw DownbeatError("\(matches.count) regions match. Narrow it with --region, --track and --bar.")
         }
-        guard let bar = match.startBar else {
+        guard let bar = match.startBar, anyPosition || match.onBarLines else {
             throw DownbeatError("The region must start and end on a bar line.")
         }
         guard let track = all.first(where: {

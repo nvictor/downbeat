@@ -47,7 +47,7 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - `play`, `stop` and `record` press the control bar buttons. `stop` does nothing when already stopped, because the button would move the playhead.
 - Mute and Solo are clicked. Accessibility presses change nothing.
 - A solo hides mute states: `track list` does not report them, and `track mute` is refused.
-- `region delete` clicks the track header, selects the region, then uses `Edit > Delete`. The region must start and end on a bar line.
+- `region delete` clicks the track header, selects the region, then uses `Edit > Delete`.
 - `midi import` keeps the project tempo and prints the tracks it added.
 - Tested live: all of the above. `record` was tested without MIDI input, so no recorded region was checked.
 
@@ -70,7 +70,7 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - Length comes from the meter at the start bar. A meter change inside the region is caught by the final bar check, which undoes the steps.
 - Tested in 4/4 and 6/8, on software instrument and external MIDI tracks.
 - Audio tracks are refused: Logic would accept the region and play nothing.
-- Refused when a region already covers any of the bars, or a region on the track is off the bar lines.
+- Refused when a region already touches any of the bars.
 - The Region inspector shows no color until the region has notes.
 
 ## Renaming a region
@@ -140,6 +140,17 @@ Neither command is tested with automation.
 - A muted track still exports its audio.
 - Tested with a mono tone on an audio track, and a software instrument track. Other file formats and sample rates were not tested.
 
+## Regions off the bar lines
+
+`region delete`, `move`, `duplicate` and `rename` work on any region, picked by the bar it starts in. `region list` marks the ones off the bar lines, and shows every bar they touch.
+
+- Two regions starting in the same bar of a track cannot be edited this way. Refused.
+- A moved or copied region starts on the first beat of the target bar.
+- The free space check counts whole bars.
+- Logic numbers a pasted audio region anew. `move` renames it back; a copy keeps the new number.
+- Tested on audio regions starting on a bar line and ending inside a bar. The moved audio was checked in an export.
+- Not tested: a region starting inside a bar.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
@@ -160,7 +171,7 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Custom color | Lost: the new region takes the default. Detected after the replace, which is then undone. |
 | Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
-| Regions that start or end inside a bar | Refused. |
+| Regions that start or end inside a bar | MIDI edits are refused. |
 | Deleting the first, the last or every note | Region bounds preserved. A custom color is not detected when every note goes. |
 | Several MIDI channels in one region | Can be read. Replacing is refused: Logic gives the imported region another color. |
 | Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
