@@ -13,7 +13,10 @@ public struct Environment: Codable, Sendable {
     public var problems: [String] {
         var result: [String] = []
         if !accessibilityTrusted {
-            result.append("Grant Accessibility in System Settings > Privacy & Security > Accessibility.")
+            let list = ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 27
+                ? "Device Control and Data Access"
+                : "Accessibility"
+            result.append("Grant Accessibility in System Settings > Privacy & Security > \(list).")
         }
         if !running { result.append("Open Logic Pro.") }
         if let language, !language.hasPrefix("en") { result.append("Only the English UI is supported.") }

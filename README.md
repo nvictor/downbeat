@@ -14,6 +14,23 @@ swift build -c release
 install -m 755 .build/release/downbeat ~/.local/bin/downbeat
 ```
 
+If `~/.local/bin` is not in your `PATH`, add it, then open a new terminal window:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
+```
+
+With Logic Pro open, check the setup:
+
+```bash
+downbeat check
+```
+
+Allow what it lists under System Settings > Privacy & Security, then run it again.
+
+- Accessibility: on macOS 27, the list is named Device Control and Data Access. Turn on the terminal app that runs `downbeat`, then quit and reopen it.
+- Automation: allow it when macOS asks.
+
 ## Start a project
 
 Once: save an empty project in Logic Pro, then keep it as the template.
