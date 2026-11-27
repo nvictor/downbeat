@@ -72,3 +72,5 @@ logic note transpose --track 1 --bar 3 --project MySong --semitones=-2
 ## License
 
 [MIT](LICENSE)
+
+Logic and Logic Pro are trademarks of Apple Inc., registered in the U.S. and other countries and regions. This project is not affiliated with or endorsed by Apple Inc.
