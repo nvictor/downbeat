@@ -1,0 +1,108 @@
+import Foundation
+import Testing
+@testable import MIDIKit
+
+/// Format 1, 480 ticks: a conductor track and one instrument track.
+private func fixture() -> Data {
+    func chunk(_ type: String, _ body: [UInt8]) -> [UInt8] {
+        let n = body.count
+        return Array(type.utf8) + [UInt8(n >> 24 & 0xFF), UInt8(n >> 16 & 0xFF), UInt8(n >> 8 & 0xFF), UInt8(n & 0xFF)] + body
+    }
+    let conductor: [UInt8] = [
+        0x00, 0xFF, 0x51, 0x03, 0x0D, 0x42, 0x6C,  // tempo
+        0x00, 0xFF, 0x58, 0x04, 0x03, 0x02, 0x18, 0x08,  // 3/4
+        0x00, 0xFF, 0x2F, 0x00,
+    ]
+    let name = Array("Bass".utf8)
+    let instrument: [UInt8] = [0x00, 0xFF, 0x03, UInt8(name.count)] + name + [
+        0x00, 0xC1, 0x21,  // program change
+        0x00, 0xB1, 0x01, 0x40,  // mod wheel
+        0x07, 0x91, 0x3C, 0x64,  // C4 on, 7 ticks late
+        0x00, 0xE1, 0x00, 0x50,  // pitch bend
+        0x00, 0xD1, 0x30,  // channel pressure
+        0x00, 0xA1, 0x3C, 0x22,  // poly pressure
+        0x81, 0x70, 0x81, 0x3C, 0x28,  // C4 off, release 40
+        0x00, 0x91, 0x40, 0x50,
+        0x83, 0x60, 0x81, 0x40, 0x00,
+        0x00, 0xFF, 0x2F, 0x00,
+    ]
+    return Data(chunk("MThd", [0, 1, 0, 2, 0x01, 0xE0]) + chunk("MTrk", conductor) + chunk("MTrk", instrument))
+}
+
+private func temporaryURL() -> URL {
+    FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mid")
+}
+
+private func roundTrip(_ edit: (MIDIFile) throws -> Void = { _ in }) throws -> (before: SMF, after: SMF) {
+    let input = temporaryURL()
+    let output = temporaryURL()
+    defer {
+        try? FileManager.default.removeItem(at: input)
+        try? FileManager.default.removeItem(at: output)
+    }
+    try fixture().write(to: input)
+    let file = try MIDIFile(contentsOf: input)
+    try edit(file)
+    try file.save(to: output)
+    return (try SMF(data: fixture()), try SMF(data: Data(contentsOf: output)))
+}
+
+/// Channel events and the meta events that matter, ignoring end-of-track markers.
+private func meaningful(_ smf: SMF) -> [SMFEvent] {
+    smf.events
+        .filter { !($0.bytes.starts(with: [0xFF, 0x2F])) }
+        .sorted { ($0.track, $0.tick, $0.bytes.description) < ($1.track, $1.tick, $1.bytes.description) }
+}
+
+@Test func readsNotes() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let notes = try MIDIFile(contentsOf: url).notes()
+    #expect(notes.map(\.pitch) == [60, 64])
+    #expect(notes.map(\.velocity) == [100, 80])
+    #expect(notes[0].channel == 2)
+    #expect(notes[0].releaseVelocity == 40)
+    #expect(abs(notes[0].beat - 7.0 / 480) < 1e-9)
+    #expect(abs(notes[0].duration - 0.5) < 1e-6)
+}
+
+@Test func roundTripKeepsEveryEvent() throws {
+    let (before, after) = try roundTrip()
+    #expect(after.ticksPerQuarter == before.ticksPerQuarter)
+    #expect(meaningful(after) == meaningful(before))
+}
+
+@Test func transposeChangesOnlyPitches() throws {
+    let (before, after) = try roundTrip { try $0.transpose(semitones: 2) }
+    let expected = meaningful(before).map { event in
+        guard [0x80, 0x90].contains(event.bytes[0] & 0xF0) else { return event }
+        var bytes = event.bytes
+        bytes[1] += 2
+        return SMFEvent(track: event.track, tick: event.tick, bytes: bytes)
+    }
+    #expect(Set(meaningful(after)) == Set(expected))
+    #expect(meaningful(after).count == expected.count)
+}
+
+@Test func transposeRefusesOutOfRange() throws {
+    #expect(throws: TransposeError.self) {
+        _ = try roundTrip { try $0.transpose(semitones: 100) }
+    }
+}
+
+@Test func differencesReportsChangedEvents() throws {
+    let (before, after) = try roundTrip { try $0.transpose(semitones: 1) }
+    let changes = before.differences(from: after)
+    #expect(changes.removed.count == 4)
+    #expect(changes.added.count == 4)
+    #expect(before.differences(from: before).removed.isEmpty)
+}
+
+@Test func extendAddsOneTextEventBeforeTheTick() throws {
+    let (before, after) = try roundTrip { try $0.extend(toTick: 3840) }
+    let changes = before.differences(from: after)
+    #expect(changes.removed.isEmpty)
+    #expect(changes.added.map(\.tick) == [3839])
+    #expect(changes.added.first?.bytes == [0xFF, 0x01, 0x2E])
+}
