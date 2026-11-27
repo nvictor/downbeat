@@ -28,6 +28,20 @@ Then:
 logic project new "Night Drive" --tempo 92 --signature 6/8 --key "A minor"
 ```
 
+## Tracks
+
+```bash
+logic track list
+```
+
+```bash
+logic track create --type instrument --name "Bass" --project "Night Drive"
+```
+
+```bash
+logic track rename 1 "Drums" --project "Night Drive"
+```
+
 ## Use
 
 ```bash

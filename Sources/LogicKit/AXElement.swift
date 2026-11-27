@@ -66,6 +66,11 @@ struct AXElement {
         }
     }
 
+    func isSettable(_ attribute: String) -> Bool {
+        var settable: DarwinBoolean = false
+        return AXUIElementIsAttributeSettable(raw, attribute as CFString, &settable) == .success && settable.boolValue
+    }
+
     func set(_ attribute: String, to value: CFTypeRef) throws {
         let status = AXUIElementSetAttributeValue(raw, attribute as CFString, value)
         guard status == .success else {

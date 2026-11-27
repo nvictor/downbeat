@@ -7,7 +7,7 @@ struct Logic: ParsableCommand {
         abstract: "Control Logic Pro from the command line.",
         subcommands: [
             Check.self, Inspect.self, StatusCommand.self, Project.self, Tempo.self,
-            Region.self, NoteCommands.self,
+            TrackCommands.self, Region.self, NoteCommands.self,
         ]
     )
 }

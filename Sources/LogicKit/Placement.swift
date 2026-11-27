@@ -165,24 +165,6 @@ extension LogicApp {
         try wait("\(track) to be selected") { isSelected() ? true : nil }
     }
 
-    /// Clicks a point, only if it still belongs to `element` and not to a window above it.
-    private func click(_ point: CGPoint, on element: AXElement) throws {
-        try activate()
-        var hit: AXUIElement?
-        AXUIElementCopyElementAtPosition(
-            AXUIElementCreateSystemWide(), Float(point.x), Float(point.y), &hit
-        )
-        guard let hit, element.first(maxDepth: 2, where: { CFEqual($0.raw, hit) }) != nil else {
-            throw LogicError("Something covers the spot to click. Keep hands off keyboard and mouse.")
-        }
-        let source = CGEventSource(stateID: .hidSystemState)
-        for type in [CGEventType.leftMouseDown, .leftMouseUp] {
-            CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?
-                .post(tap: .cghidEventTap)
-            Thread.sleep(forTimeInterval: 0.05)
-        }
-    }
-
     func select(regionStartingAt bar: Int, on track: String) throws {
         let lane = try element(inGroup: "Tracks contents", described: track)
         guard let region = lane.children.first(where: {

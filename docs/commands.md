@@ -10,6 +10,9 @@ logic project new <name> [--tempo n] [--signature 6/8] [--key "A minor"] [--dire
 logic project template <path.logicx> [--replace]
 logic tempo get
 logic tempo set <n> --project <name>
+logic track list [--json]
+logic track create --type instrument|audio|external [--name n] --project <name>
+logic track rename <track> <new name> --project <name>
 logic region list [--track t] [--json]
 logic region export <region> --output <file.mid>
 logic region import <file.mid> <region> --project <name>     # replaces the region
@@ -42,9 +45,7 @@ logic project save
 logic project info
 
 # tracks
-logic track list [--json]
 logic track select "Drums"
-logic track create --type instrument --name "Bass"
 logic track mute "Bass"
 logic track solo "Lead Guitar"
 
