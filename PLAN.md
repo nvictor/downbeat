@@ -13,6 +13,18 @@
 - [ ] Try it on a copy of an `Atalanta` project
 - [ ] Search trademark databases for `downbeat` before promoting it
 
+## Short command: `db`
+
+- [ ] Install `db` as a short name for `downbeat`, for example a symlink in `~/.local/bin`
+- [ ] Keep `downbeat` as the project and primary command name
+- [ ] Document it in the README and the skill
+
+Why `db` over `dbx`:
+
+- Shorter.
+- `dbx` is already used by a Databricks tool and a database client, and reads as Dropbox.
+- Caveat: `db` often means database. Neither name was on the PATH when checked.
+
 ## Remaining commands
 
 Names can change.
