@@ -27,6 +27,8 @@ downbeat mixer volume <track> --db n --project <name>           # up to +6, or -
 downbeat mixer pan <track> --value n --project <name>           # -64 to 63
 downbeat marker create <name> --bar n --project <name>
 downbeat plugin list <track> [--json]
+downbeat plugin add <track> <plugin> [--format f] --project <name>
+downbeat plugin remove <track> <plugin> --project <name>
 downbeat plugin bypass <track> <plugin> [--off] --project <name>
 downbeat midi ports [--json]
 downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks

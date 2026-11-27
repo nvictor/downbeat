@@ -117,10 +117,15 @@ Neither command is tested with automation.
 
 `downbeat plugin list` selects the track, reads the channel strip in the inspector, then restores the selection. `downbeat plugin bypass` presses the bypass checkbox of a slot.
 
-- The instrument is listed with the effects. In the test it came after them.
+- The list follows the signal: the instrument first, then the effects. Accessibility lists them the other way round.
 - Pick a plugin by name or number. Use the number when two share a name.
 - Tested on software instrument tracks. The result was checked in the Mixer.
-- Not tested: effects on audio tracks, MIDI effects, aux and output channels.
+- `plugin add` picks the name from Logic's plugin menu, categories and Audio Units included, then closes the window Logic opens. A new effect goes last.
+- `--format` picks a menu format such as `Stereo` or `Dual Mono`. Default: the first one.
+- `plugin remove` picks `No Plug-in` in the slot's menu. The settings are lost. Undo was not tested.
+- Add and remove tested on software instrument and audio tracks. Removing an instrument works too. External MIDI tracks are refused.
+- Seen once: the instrument slot was named `input` and its checkbox kept a stale state, while the Mixer was right. It went back to normal after effects were removed. downbeat reports the bypass as unknown and refuses to change it.
+- Not tested: MIDI effects, aux and output channels, third-party plugins.
 
 ## What survives a region edit
 

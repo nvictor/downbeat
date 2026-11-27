@@ -2,5 +2,4 @@
 
 ## Later
 
-- [ ] Plugin add and remove
 - [ ] Audio editing
