@@ -26,60 +26,7 @@ downbeat note quantize <region> --project <name> --division 1/16
 
 ## Planned
 
-Proposed, not implemented. Names can change.
-
-```
-# diagnostics
-downbeat midi ports
-
-# transport
-downbeat play
-downbeat stop
-downbeat record
-
-# project
-downbeat project open <path.logicx>
-downbeat project save
-downbeat project info
-
-# tracks
-downbeat track select "Drums"
-downbeat track mute "Bass"
-downbeat track solo "Lead Guitar"
-
-# mixer
-downbeat mixer volume "Bass" -6
-downbeat mixer pan "Lead Guitar" 20
-
-# markers
-downbeat marker create "Intro" --bar 1
-
-# MIDI files
-downbeat midi import drums.mid
-
-# regions
-downbeat region create --track "Drums" --bar 1 --bars 4
-downbeat region delete "Verse"
-downbeat region rename "Verse" "Intro"
-downbeat region duplicate "Intro" --bar 5
-downbeat region move "Intro" --bar 9
-
-# notes
-downbeat note add --region "Intro" --pitch C4 --beat 1 --duration 0.5 --velocity 100
-downbeat note delete --region "Intro" --id 12
-downbeat note update --region "Intro" --id 12 --pitch D4
-downbeat note export --region "Intro" > notes.json
-downbeat note import --region "Intro" notes.json
-```
-
-## Also deferred
-
-- Scripter bridge (virtual MIDI ports)
-- MCP adapter
-- Plugin management
-- Audio editing
-- Homebrew distribution
-- GUS, MEL and HAL integration
+See [PLAN.md](../PLAN.md).
 
 ## Rules
 

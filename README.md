@@ -67,6 +67,7 @@ downbeat note transpose --track 1 --bar 3 --project MySong --semitones=-2
 ## More
 
 - [Commands](docs/commands.md)
+- [Plan](PLAN.md)
 - [How it works and limits](docs/how-it-works.md)
 - Agent skill: [skills/downbeat](https://github.com/nvictor/skills/tree/main/downbeat)
 

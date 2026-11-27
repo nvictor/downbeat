@@ -114,6 +114,6 @@ Without a fix the count grew on each pass: 215, 428, 854.
 
 ## Open issues
 
-- One region edit failed at its Cut step right after a project was opened. It undid itself and passed on retry. Cause unknown.
+- Region edits fail at the Cut step when the Piano Roll has keyboard focus. They undo themselves. See [PLAN.md](../PLAN.md).
 - A custom color is compared by the name the inspector reports, so a change of shade alone may go unnoticed.
 - A first event placed before its bar line has not been tested.
