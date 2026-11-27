@@ -78,6 +78,10 @@ downbeat region rename "Chorus" --region "Verse" --project "Night Drive"
 downbeat region duplicate --region "Chorus" --to-bar 9 --project "Night Drive"
 ```
 
+```bash
+downbeat region move --region "Chorus" --bar 9 --to-bar 17 --project "Night Drive"
+```
+
 ## Edit notes
 
 ```bash

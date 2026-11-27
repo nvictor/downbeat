@@ -5,9 +5,10 @@ import MIDIKit
 
 struct Region: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "List, create, rename, duplicate, export, import and delete regions.",
+        abstract: "List, create, rename, move, duplicate, export, import and delete regions.",
         subcommands: [
-            List.self, Create.self, Rename.self, Duplicate.self, Export.self, Import.self, Delete.self,
+            List.self, Create.self, Rename.self, Move.self, Duplicate.self,
+            Export.self, Import.self, Delete.self,
         ]
     )
 
@@ -107,6 +108,28 @@ struct Region: ParsableCommand {
             let region = try target.app().renameRegion(options.reference, to: name)
             let number = region.trackNumber.map(String.init) ?? "?"
             print("\(number)  \(region.track)  \(region.name)")
+        }
+    }
+
+    struct Move: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Move a region to another bar of its track. Does not save the project."
+        )
+
+        @OptionGroup var options: RegionOptions
+
+        @Option(help: "Bar where the region will start.")
+        var toBar: Int
+
+        @OptionGroup var target: ProjectOption
+
+        func validate() throws {
+            if toBar < 1 { throw ValidationError("--to-bar must be 1 or more.") }
+        }
+
+        func run() throws {
+            let moved = try target.app().moveRegion(options.reference, toBar: toBar)
+            print("The region now covers bars \(moved.startBar) to \(moved.endBar).")
         }
     }
 

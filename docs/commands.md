@@ -26,6 +26,7 @@ downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks
 downbeat region list [--track t] [--json]
 downbeat region create --track t --bar n [--bars 1] [--name n] --project <name>
 downbeat region rename <new name> <region> --project <name>
+downbeat region move <region> --to-bar n --project <name>
 downbeat region duplicate <region> --to-bar n --project <name>
 downbeat region export <region> --output <file.mid>
 downbeat region import <file.mid> <region> --project <name>     # replaces the region

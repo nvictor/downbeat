@@ -5,6 +5,13 @@ public struct Placement: Codable, Sendable {
     public let track: String
     public let startBar: Int
     public let endBar: Int
+
+    var bars: Range<Int> { startBar..<endBar }
+
+    /// The same length on the same track, from another bar.
+    func moved(toBar bar: Int) -> Placement {
+        Placement(track: track, startBar: bar, endBar: bar + endBar - startBar)
+    }
 }
 
 extension LogicApp {
@@ -110,10 +117,8 @@ extension LogicApp {
     /// so everything about the region is kept.
     public func duplicateRegion(_ reference: RegionReference, toBar bar: Int) throws -> Placement {
         let source = try select(reference)
-        let target = Placement(
-            track: source.track, startBar: bar, endBar: bar + source.endBar - source.startBar
-        )
-        try requireFree(bars: target.startBar..<target.endBar, onTrack: Self.trackParts(source.track).number)
+        let target = source.moved(toBar: bar)
+        try requireFree(bars: target.bars, onTrack: Self.trackParts(source.track).number)
         let count = try regions(on: source.track).count
 
         // Copy acts on the focused pane, so focus the Tracks area first.
@@ -123,18 +128,51 @@ extension LogicApp {
 
         try undoingOnFailure { step in
             try paste(on: target, expecting: count + 1, step: step)
-            guard try regions(on: target.track).contains(where: {
-                $0.help.flatMap(Self.bars).map { $0 == (target.startBar, target.endBar) } == true
-            }) else {
-                throw DownbeatError("The copy does not cover bars \(target.startBar) to \(target.endBar).")
-            }
+            try requireRegion(at: target)
         }
         return target
     }
 
+    /// Moves the one region that matches to another bar of its track, with Cut and Paste.
+    public func moveRegion(_ reference: RegionReference, toBar bar: Int) throws -> Placement {
+        let source = try select(reference)
+        if source.startBar == bar { return source }
+        let target = source.moved(toBar: bar)
+        // The region may overlap its own old bars.
+        try requireFree(
+            bars: target.bars, onTrack: Self.trackParts(source.track).number, ignoring: source.startBar
+        )
+        let count = try regions(on: source.track).count
+
+        // Cut acts on the focused pane, so focus the Tracks area first.
+        try select(track: source.track)
+        try select(regionStartingAt: source.startBar, on: source.track)
+        try undoingOnFailure { step in
+            try step {
+                try choose(["Edit", "Cut"])
+                try wait("the region to be cut") {
+                    try regions(on: source.track).count == count - 1 ? true : nil
+                }
+            }
+            try paste(on: target, expecting: count, step: step)
+            try requireRegion(at: target)
+        }
+        return target
+    }
+
+    private func requireRegion(at target: Placement) throws {
+        guard try regions(on: target.track).contains(where: {
+            $0.help.flatMap(Self.bars).map { $0 == (target.startBar, target.endBar) } == true
+        }) else {
+            throw DownbeatError("The region does not cover bars \(target.startBar) to \(target.endBar).")
+        }
+    }
+
     /// Throws unless no region of the track touches these bars.
-    private func requireFree(bars: Range<Int>, onTrack number: Int?) throws {
-        for region in try regionSummaries() where region.trackNumber == number {
+    /// `ignoring` is the start bar of a region that does not count.
+    private func requireFree(bars: Range<Int>, onTrack number: Int?, ignoring: Int? = nil) throws {
+        for region in try regionSummaries()
+        where region.trackNumber == number && (ignoring == nil || region.startBar != ignoring) {
             guard let start = region.startBar, let end = region.endBar else {
                 throw DownbeatError("\(region.name) does not sit on bar lines, so free space cannot be checked.")
             }
