@@ -63,6 +63,9 @@ extension LogicApp {
                     """)
             }
 
+            // Cut, Delete and Paste act on the focused pane, so focus the Tracks area first.
+            try select(track: imported.track)
+            try select(regionStartingAt: imported.startBar, on: imported.track)
             try step {
                 try choose(["Edit", "Cut"])
                 try wait("the imported region to be cut") {
@@ -70,6 +73,7 @@ extension LogicApp {
                 }
             }
 
+            try select(track: target.track)
             try select(regionStartingAt: target.startBar, on: target.track)
             let count = try regions(on: target.track).count
             try step {
@@ -154,14 +158,14 @@ extension LogicApp {
         return contents.children
     }
 
+    /// Clicks the track header, even when selected, which also focuses the Tracks area.
     private func select(track: String) throws {
         let header = try element(inGroup: "Tracks header", described: track)
         func isSelected() -> Bool { header.bool(kAXSelectedAttribute) == true }
         // Accessibility reports success but changes nothing, so click the header.
-        if !isSelected() {
-            guard let frame = header.frame else { throw DownbeatError("\(track) is not on screen.") }
-            try click(CGPoint(x: frame.minX + 12, y: frame.midY), on: header)
-        }
+        try scrollIntoView(header)
+        guard let frame = header.frame else { throw DownbeatError("\(track) is not on screen.") }
+        try click(CGPoint(x: frame.minX + 12, y: frame.midY), on: header)
         try wait("\(track) to be selected") { isSelected() ? true : nil }
     }
 

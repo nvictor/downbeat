@@ -13,10 +13,12 @@ A region is exported, edited as a MIDI file, and put back on the same track and 
 2. Add a text event on the last tick of the file, to fix the region length.
 3. Move the playhead to the start bar.
 4. `File > Import > MIDI File…`, decline the tempo if asked.
-5. `Edit > Cut` the imported region.
-6. Select the original region, `Edit > Delete`.
-7. Select the original track, `Edit > Paste` at the start bar.
+5. Click the extra track's header, `Edit > Cut` the imported region.
+6. Click the original track's header, select the original region, `Edit > Delete`.
+7. Click the original track's header, `Edit > Paste` at the start bar.
 8. Click the extra track's header, `Track > Delete Track`.
+
+The header clicks focus the Tracks area, because `Cut`, `Delete` and `Paste` act on the focused pane. Tested with `note transpose` while the Piano Roll had focus.
 
 If a step fails, the finished steps are undone. Tested with failures injected after Cut and after Paste.
 
@@ -114,6 +116,5 @@ Without a fix the count grew on each pass: 215, 428, 854.
 
 ## Open issues
 
-- Region edits fail at the Cut step when the Piano Roll has keyboard focus. They undo themselves. See [PLAN.md](../PLAN.md).
 - A custom color is compared by the name the inspector reports, so a change of shade alone may go unnoticed.
 - A first event placed before its bar line has not been tested.

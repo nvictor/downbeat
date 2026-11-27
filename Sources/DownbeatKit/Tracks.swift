@@ -110,7 +110,7 @@ extension LogicApp {
     }
 
     /// Scrolls the track list until `element` is inside its visible part.
-    private func scrollIntoView(_ element: AXElement) throws {
+    func scrollIntoView(_ element: AXElement) throws {
         var ancestor = element.element(kAXParentAttribute)
         while let current = ancestor, current.role != kAXScrollAreaRole {
             ancestor = current.element(kAXParentAttribute)
