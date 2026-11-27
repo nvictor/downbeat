@@ -1,11 +1,12 @@
 import ArgumentParser
 import Foundation
 import DownbeatKit
+import MIDIKit
 
 struct Region: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "List, export, import and delete regions.",
-        subcommands: [List.self, Export.self, Import.self, Delete.self]
+        abstract: "List, create, export, import and delete regions.",
+        subcommands: [List.self, Create.self, Export.self, Import.self, Delete.self]
     )
 
     struct List: ParsableCommand {
@@ -29,6 +30,54 @@ struct Region: ParsableCommand {
                 let number = region.trackNumber.map(String.init) ?? "?"
                 let bars = region.startBar.flatMap { start in region.endBar.map { "bars \(start) to \($0)" } }
                 print("\(number)  \(region.track)  \(region.name)  \(bars ?? "off the bar lines")")
+            }
+        }
+    }
+
+    struct Create: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Add an empty MIDI region to a track. Does not save the project."
+        )
+
+        @Option(help: "Track name or number. Use a software instrument or MIDI track.")
+        var track: String
+
+        @Option(help: "Bar where the region starts.")
+        var bar: Int
+
+        @Option(help: "Length in bars.")
+        var bars = 1
+
+        @Option(help: "Region name. Default: the track name.")
+        var name: String?
+
+        @OptionGroup var target: ProjectOption
+
+        func validate() throws {
+            if bar < 1 { throw ValidationError("--bar must be 1 or more.") }
+            if !(1...999).contains(bars) { throw ValidationError("--bars must be 1 to 999.") }
+            do {
+                try name.map(LogicApp.checkTrackName)
+            } catch {
+                throw ValidationError("The name cannot be empty or span lines.")
+            }
+        }
+
+        func run() throws {
+            let app = try target.app()
+            let title = try name ?? app.trackName(track)
+            try withTemporaryDirectory { directory in
+                let placement = try app.createRegion(track: track, bar: bar, bars: bars) { signature in
+                    let parts = signature.split(separator: "/").compactMap { Int($0) }
+                    guard parts.count == 2, parts[1] > 0 else {
+                        throw DownbeatError("The meter \(signature) is not supported.")
+                    }
+                    let ticks = bars * parts[0] * SMF.emptyRegionResolution * 4 / parts[1]
+                    let url = directory.appendingPathComponent("empty.mid")
+                    try SMF.emptyRegion(name: title, ticks: ticks).write(to: url)
+                    return url
+                }
+                print("Created \(title), bars \(placement.startBar) to \(placement.endBar).")
             }
         }
     }

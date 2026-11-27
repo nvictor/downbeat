@@ -63,6 +63,16 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - `note import` replaces every note and keeps the other events.
 - Refused: notes outside the region, and overlapping notes of the same pitch.
 
+## Creating a region
+
+`downbeat region create` imports a MIDI file holding only a name and two text events, cuts the region, pastes it on the target track and deletes the extra track.
+
+- Length comes from the meter at the start bar. A meter change inside the region is caught by the final bar check, which undoes the steps.
+- Tested in 4/4 and 6/8, on software instrument and external MIDI tracks.
+- Audio tracks are refused: Logic would accept the region and play nothing.
+- Refused when a region already covers any of the bars, or a region on the track is off the bar lines.
+- The Region inspector shows no color until the region has notes.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
@@ -84,7 +94,7 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Automation, other region settings | Not tested. The region is new, so expect loss. |
 | SysEx, markers | Not tested. |
 | Regions that start or end inside a bar | Refused. |
-| Deleting the first, the last or every note | Region bounds preserved. |
+| Deleting the first, the last or every note | Region bounds preserved. A custom color is not detected when every note goes. |
 | Several MIDI channels in one region | Can be read. Replacing is refused: Logic gives the imported region another color. |
 | Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
 | 3/4 | Preserved. Other meters not tested. |
@@ -133,6 +143,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
 | The track list has page actions that fail. | Scroll with the mouse wheel and wait for it to stop. |
 | Playback leaves divisions and ticks that cannot be written, so a paste lands off the bar line. | Press the stop button (go to beginning) before moving the playhead. |
 | Exporting a region with several channels asks whether to convert them. | Answer `Don't Convert`. |
+| A region without channel events, or with several channels, reports its color as `not set`. | Skip the color check when there was no color to keep. |
 | Track and region descriptions gain `, mute`, `, solo` or `, muted`. | Ignore the suffix when reading names. |
 
 ## AudioToolbox

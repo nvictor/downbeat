@@ -60,6 +60,16 @@ downbeat stop
 downbeat project save --project "Night Drive"
 ```
 
+## Write a part
+
+```bash
+downbeat region create --track "Bass" --bar 1 --bars 4 --name "Verse" --project "Night Drive"
+```
+
+```bash
+downbeat note import notes.json --region "Verse" --project "Night Drive"
+```
+
 ## Edit notes
 
 ```bash

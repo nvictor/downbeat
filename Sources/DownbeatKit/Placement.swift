@@ -32,46 +32,14 @@ extension LogicApp {
     /// Replaces the selected region with the content of a MIDI file:
     /// import at the same bar, move the new region to the original track, remove the extra track.
     /// If a step fails, the finished ones are undone.
-    public func replaceSelectedRegion(with url: URL, at target: Placement) throws {
-        let original = try layout()
+    /// Pass `empty` when the file has no channel events: Logic Pro gives such a region no color.
+    public func replaceSelectedRegion(with url: URL, at target: Placement, empty: Bool) throws {
         let trackCount = try tracks().count
         let color = try regionColor()
-        var changes = 0
 
-        /// Runs one undoable step, counting it if it changed anything, even when it then failed.
-        func step(_ action: () throws -> Void) throws {
-            let before = try layout()
-            do {
-                try action()
-            } catch {
-                if (try? layout()) != before { changes += 1 }
-                throw error
-            }
-            changes += 1
-        }
-
-        do {
+        try undoingOnFailure { step in
             try movePlayhead(toBar: target.startBar)
-            try step { try importMIDI(from: url) }
-
-            let imported = try selectedPlacement()
-            guard imported.track != target.track,
-                  imported.startBar == target.startBar, imported.endBar == target.endBar else {
-                throw DownbeatError("""
-                    Imported region is on \(imported.track), bars \(imported.startBar) to \(imported.endBar), \
-                    expected bars \(target.startBar) to \(target.endBar).
-                    """)
-            }
-
-            // Cut, Delete and Paste act on the focused pane, so focus the Tracks area first.
-            try select(track: imported.track)
-            try select(regionStartingAt: imported.startBar, on: imported.track)
-            try step {
-                try choose(["Edit", "Cut"])
-                try wait("the imported region to be cut") {
-                    try regions(on: imported.track).isEmpty ? true : nil
-                }
-            }
+            let imported = try importForMove(url, to: target, step: step)
 
             try select(track: target.track)
             try select(regionStartingAt: target.startBar, on: target.track)
@@ -83,27 +51,84 @@ extension LogicApp {
                 }
             }
 
-            try select(track: target.track)
-            try movePlayhead(toBar: target.startBar)
-            try step {
-                try choose(["Edit", "Paste"])
-                try wait("the region to be pasted on \(target.track)") {
-                    try regions(on: target.track).count == count ? true : nil
-                }
-            }
-
-            try select(track: imported.track)
-            try step {
-                try choose(["Track", "Delete Track"])
-                try wait("the extra track to be removed") {
-                    try tracks().count == trackCount ? true : nil
-                }
-            }
+            try paste(on: target, expecting: count, step: step)
+            try removeTrack(imported.track, leaving: trackCount, step: step)
 
             // The new region gets the default color, so a custom one cannot be kept.
             try select(regionStartingAt: target.startBar, on: target.track)
-            guard (try? wait("the color", seconds: 3, { try regionColor() == color ? true : nil })) != nil else {
+            // A region without a color had none to keep.
+            let accepted = empty ? [color, Self.noColor] : [color]
+            guard color == Self.noColor || (try? wait("the color", seconds: 3, {
+                accepted.contains(try regionColor()) ? true : nil
+            })) != nil else {
                 throw DownbeatError("The region has a custom color (\(color)), which cannot survive a round trip.")
+            }
+        }
+    }
+
+    /// What the inspector reports for a region without channel events.
+    private static let noColor = "not set"
+
+    /// Adds a region to a track from a MIDI file that spans `bars` bars of the meter at `bar`.
+    /// `file` receives the meter, for example `4/4`, and returns the file to import.
+    public func createRegion(
+        track reference: String, bar: Int, bars: Int, file: (String) throws -> URL
+    ) throws -> Placement {
+        guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
+        let track = try Self.match(reference, in: trackSummaries())
+        let end = bar + bars
+        for region in try regionSummaries() where region.trackNumber == track.number {
+            guard let start = region.startBar, let stop = region.endBar else {
+                throw DownbeatError("\(region.name) does not sit on bar lines, so free space cannot be checked.")
+            }
+            if start < end && bar < stop {
+                throw DownbeatError("\(region.name) already covers bars \(start) to \(stop) on \(track.name).")
+            }
+        }
+        // Logic Pro adds the imported track after the selected one, which keeps the target's number.
+        _ = try selectTrack(reference)
+        // Logic Pro would paste a MIDI region on an audio track too, where it makes no sound.
+        try requireMIDIStrip(named: track.name)
+        guard let lane = try tracks().map(\.name).first(where: { Self.trackParts($0).number == track.number }) else {
+            throw DownbeatError("The track \(track.name) was not found.")
+        }
+        let target = Placement(track: lane, startBar: bar, endBar: end)
+        // The control bar shows the meter at the playhead.
+        try movePlayhead(toBar: bar)
+        guard let signature = try status().signature else { throw DownbeatError("The meter could not be read.") }
+        let url = try file(signature)
+        let trackCount = try tracks().count
+        let count = try regions(on: lane).count
+
+        try undoingOnFailure { step in
+            let imported = try importForMove(url, to: target, step: step)
+            try paste(on: target, expecting: count + 1, step: step)
+            try removeTrack(imported.track, leaving: trackCount, step: step)
+            guard try regions(on: lane).contains(where: {
+                $0.help.flatMap(Self.bars).map { $0 == (bar, end) } == true
+            }) else {
+                throw DownbeatError("The new region does not cover bars \(bar) to \(end).")
+            }
+        }
+        return target
+    }
+
+    /// Runs one undoable step, counting it if it changed anything, even when it then failed.
+    private typealias Step = (() throws -> Void) throws -> Void
+
+    private func undoingOnFailure(_ body: (Step) throws -> Void) throws {
+        let original = try layout()
+        var changes = 0
+        do {
+            try body { action in
+                let before = try layout()
+                do {
+                    try action()
+                } catch {
+                    if (try? layout()) != before { changes += 1 }
+                    throw error
+                }
+                changes += 1
             }
         } catch {
             guard changes > 0 else { throw error }
@@ -117,6 +142,52 @@ extension LogicApp {
                     """)
             }
             throw DownbeatError("\(error)\nThe \(changes) finished steps were undone.")
+        }
+    }
+
+    /// Imports the file onto a new track and cuts the region, ready to be pasted on the target.
+    private func importForMove(_ url: URL, to target: Placement, step: Step) throws -> Placement {
+        try step { try importMIDI(from: url) }
+
+        let imported = try selectedPlacement()
+        guard imported.track != target.track,
+              imported.startBar == target.startBar, imported.endBar == target.endBar else {
+            throw DownbeatError("""
+                Imported region is on \(imported.track), bars \(imported.startBar) to \(imported.endBar), \
+                expected bars \(target.startBar) to \(target.endBar).
+                """)
+        }
+
+        // Cut, Delete and Paste act on the focused pane, so focus the Tracks area first.
+        try select(track: imported.track)
+        try select(regionStartingAt: imported.startBar, on: imported.track)
+        try step {
+            try choose(["Edit", "Cut"])
+            try wait("the imported region to be cut") {
+                try regions(on: imported.track).isEmpty ? true : nil
+            }
+        }
+        return imported
+    }
+
+    private func paste(on target: Placement, expecting count: Int, step: Step) throws {
+        try select(track: target.track)
+        try movePlayhead(toBar: target.startBar)
+        try step {
+            try choose(["Edit", "Paste"])
+            try wait("the region to be pasted on \(target.track)") {
+                try regions(on: target.track).count == count ? true : nil
+            }
+        }
+    }
+
+    private func removeTrack(_ track: String, leaving count: Int, step: Step) throws {
+        try select(track: track)
+        try step {
+            try choose(["Track", "Delete Track"])
+            try wait("the extra track to be removed") {
+                try tracks().count == count ? true : nil
+            }
         }
     }
 

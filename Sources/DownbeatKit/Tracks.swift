@@ -78,6 +78,10 @@ extension LogicApp {
         }
     }
 
+    public func trackName(_ reference: String) throws -> String {
+        try Self.match(reference, in: trackSummaries()).name
+    }
+
     /// Selects a track by clicking its header.
     public func selectTrack(_ reference: String) throws -> TrackSummary {
         let (track, header) = try find(reference)

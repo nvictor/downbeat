@@ -66,11 +66,32 @@ extension LogicApp {
         }
     }
 
-    private func showRegionInspector() throws {
+    /// Throws unless the inspector's channel strip of the selected track takes MIDI:
+    /// a software instrument has a MIDI plug-in slot, an external MIDI track has assign knobs.
+    func requireMIDIStrip(named name: String) throws {
+        try showInspector()
+        let strip = try wait("the channel strip of \(name)", seconds: 3) {
+            projectWindow?.element.first {
+                $0.role == "AXLayoutArea" && $0.string(kAXDescriptionAttribute) == "Mixer"
+            }?.children.first { $0.string(kAXDescriptionAttribute) == name }
+        }
+        let takesMIDI = strip.first(maxDepth: 3) {
+            ["MIDI plug-in", "midi assign knob"].contains($0.string(kAXDescriptionAttribute))
+        }
+        guard takesMIDI != nil else {
+            throw DownbeatError("\(name) is not a software instrument or external MIDI track.")
+        }
+    }
+
+    private func showInspector() throws {
         guard let window = projectWindow?.element else { throw DownbeatError("Open a project.") }
+        let toggle = window.first { $0.identifier == "controlBar/inspectorButton" }
+        if let toggle, toggle.string(kAXValueAttribute) == "0" { try toggle.perform(kAXPressAction) }
+    }
+
+    private func showRegionInspector() throws {
+        try showInspector()
         if regionInspector == nil {
-            let toggle = window.first { $0.identifier == "controlBar/inspectorButton" }
-            if let toggle, toggle.string(kAXValueAttribute) == "0" { try toggle.perform(kAXPressAction) }
             try wait("the Region inspector") { regionInspector }
         }
         // Each section reveals the next. "More" appears twice; the first belongs to General.

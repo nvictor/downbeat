@@ -58,7 +58,7 @@ extension LogicApp {
         try withTemporaryDirectory { directory in
             let prepared = directory.appendingPathComponent("import.mid")
             try MIDIFile.prepareForImport(source, to: prepared)
-            try replaceSelectedRegion(with: prepared, at: placement)
+            try replaceSelectedRegion(with: prepared, at: placement, empty: channels.isEmpty)
         }
     }
 }

@@ -6,7 +6,6 @@ Names can change.
 
 ### Needs experiments
 
-- [ ] `downbeat region create --track "Drums" --bar 1 --bars 4`
 - [ ] `downbeat region rename "Verse" "Intro"`
 - [ ] `downbeat region duplicate "Intro" --bar 5`
 - [ ] `downbeat region move "Intro" --bar 9`

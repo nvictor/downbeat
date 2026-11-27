@@ -33,15 +33,19 @@ extension LogicApp {
         try activate()
         guard let frame = area.frame else { return }
         let point = CGPoint(x: frame.midX, y: frame.midY)
-        var hit: AXUIElement?
-        AXUIElementCopyElementAtPosition(
-            AXUIElementCreateSystemWide(), Float(point.x), Float(point.y), &hit
-        )
-        var ancestor = hit.map { AXElement(raw: $0) }
-        while let current = ancestor, !current.isSame(as: area) {
-            ancestor = current.element(kAXParentAttribute)
+        func isUncovered() -> Bool {
+            var hit: AXUIElement?
+            AXUIElementCopyElementAtPosition(
+                AXUIElementCreateSystemWide(), Float(point.x), Float(point.y), &hit
+            )
+            var ancestor = hit.map { AXElement(raw: $0) }
+            while let current = ancestor, !current.isSame(as: area) {
+                ancestor = current.element(kAXParentAttribute)
+            }
+            return ancestor != nil
         }
-        guard ancestor != nil else {
+        // Right after coming to the front, the window may still be rising.
+        guard (try? wait("the track list", seconds: 2, { isUncovered() ? true : nil })) != nil else {
             throw DownbeatError("The track list is covered. Keep hands off keyboard and mouse.")
         }
         let event = CGEvent(

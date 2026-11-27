@@ -24,6 +24,7 @@ downbeat track mute <track> [--off] --project <name>
 downbeat track solo <track> [--off] --project <name>
 downbeat midi import <file.mid> [--bar n] --project <name>      # adds tracks
 downbeat region list [--track t] [--json]
+downbeat region create --track t --bar n [--bars 1] [--name n] --project <name>
 downbeat region export <region> --output <file.mid>
 downbeat region import <file.mid> <region> --project <name>     # replaces the region
 downbeat region delete <region> --project <name>

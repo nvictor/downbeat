@@ -268,3 +268,17 @@ func refusesBadPitches(text: String) {
 func refusesABadDocument(json: String) {
     #expect(throws: LayoutError.self) { try NoteDocument(json: Data(json.utf8)) }
 }
+
+@Test func emptyRegionHasItsNameAndBounds() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    let data = SMF.emptyRegion(name: "Verse", ticks: 7680)
+    let smf = try SMF(data: data)
+    #expect(smf.bounds.start == 0)
+    #expect(smf.bounds.end == 7680)
+    #expect(smf.hasSizingEvent(atTick: 0))
+    #expect(smf.hasSizingEvent(atTick: 7679))
+    #expect(smf.events.contains { $0.bytes == [0xFF, 0x03] + Array("Verse".utf8) })
+    try data.write(to: url)
+    #expect(try MIDIFile(contentsOf: url).notes().isEmpty)
+}
