@@ -6,7 +6,6 @@ Names can change.
 
 ### Needs experiments
 
-- [ ] `downbeat region rename "Verse" "Intro"`
 - [ ] `downbeat region duplicate "Intro" --bar 5`
 - [ ] `downbeat region move "Intro" --bar 9`
 - [ ] `downbeat mixer volume "Bass" -6`

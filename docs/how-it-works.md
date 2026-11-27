@@ -10,7 +10,7 @@ A region is exported, edited as a MIDI file, and put back on the same track and 
 `downbeat region import` does this:
 
 1. Read the selected region's track, start bar and end bar.
-2. Add a text event on the last tick of the file, to fix the region length.
+2. Add text events on the first and last tick of the file, to fix the region length, and move everything to start at tick 0.
 3. Move the playhead to the start bar, by way of the project start.
 4. `File > Import > MIDI File…`, decline the tempo if asked.
 5. Click the extra track's header, `Edit > Cut` the imported region.
@@ -73,6 +73,10 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - Refused when a region already covers any of the bars, or a region on the track is off the bar lines.
 - The Region inspector shows no color until the region has notes.
 
+## Renaming a region
+
+`downbeat region rename` double-clicks the name in the Region inspector, writes into the editor and presses Return. The new name survives later edits.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.
@@ -97,7 +101,8 @@ Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 
 | Deleting the first, the last or every note | Region bounds preserved. A custom color is not detected when every note goes. |
 | Several MIDI channels in one region | Can be read. Replacing is refused: Logic gives the imported region another color. |
 | Region on a muted track, or silenced by a solo | Cannot be exported. Refused. |
-| 3/4 | Preserved. Other meters not tested. |
+| 3/4 | Preserved. |
+| 6/8 | Preserved since the file starts at tick 0. |
 | Several regions on a track | The other region is untouched (identical export). |
 
 ## Pitch bend growth (fixed)
@@ -122,6 +127,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
 - Export writes a format 0 file with absolute project positions. End of track is the region end.
 - Import creates a new track and places the region at the playhead bar.
 - Import ignores the end-of-track marker. The last event sets the length.
+- Outside 4/4, import reads a file that starts later than tick 0 as offset inside a bar, which lengthens the region. Seen in 6/8.
 - A file without a track name gives a region named after the added text event (`.`).
 - `Undo` restored the original exactly (identical export).
 

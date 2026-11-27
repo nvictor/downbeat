@@ -58,6 +58,53 @@ extension LogicApp {
         }
     }
 
+    /// Renames the one region that matches, through the name field of the Region inspector.
+    public func renameRegion(_ reference: RegionReference, to name: String) throws -> RegionSummary {
+        try Self.checkRegionName(name)
+        let placement = try select(reference)
+        let track = Self.trackParts(placement.track)
+        func renamed() throws -> RegionSummary? {
+            try regionSummaries().first { $0.trackNumber == track.number && $0.startBar == placement.startBar }
+        }
+        guard let region = try renamed() else { throw DownbeatError("The region was not found.") }
+        if region.name == name { return region }
+        let editor = try openRegionNameEditor(showing: region.name)
+        try editor.set(kAXValueAttribute, to: name as CFString)
+        try wait("the new name to be accepted") { editor.string(kAXValueAttribute) == name ? true : nil }
+        try sendKey(Key.returnKey)
+        return try wait("the region to be renamed") { try renamed().flatMap { $0.name == name ? $0 : nil } }
+    }
+
+    public static func checkRegionName(_ name: String) throws {
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty,
+              !name.contains(where: \.isNewline) else {
+            throw DownbeatError("A region name cannot be empty or span lines.")
+        }
+    }
+
+    /// Double-clicks the name next to "Region:" until it turns into an editor.
+    ///
+    /// Keys typed outside an edit field act as Logic Pro key commands, so nothing is typed:
+    /// the caller writes the name into the editor, which is returned only once it is open.
+    private func openRegionNameEditor(showing name: String) throws -> AXElement {
+        try showRegionInspector()
+        for _ in 1...3 {
+            guard let inspector = regionInspector, let label = inspector.children.first(where: {
+                $0.role == kAXStaticTextRole && $0.string(kAXValueAttribute) == name
+            }), let frame = label.frame else { break }
+            try click(CGPoint(x: frame.minX + min(frame.width / 2, 20), y: frame.midY), on: inspector, count: 2)
+            let editor = try? wait("the name editor", seconds: 2) { () -> AXElement? in
+                guard let focused = root.element(kAXFocusedUIElementAttribute),
+                      focused.role == kAXTextFieldRole,
+                      focused.isSettable(kAXValueAttribute),
+                      focused.string(kAXValueAttribute) == name else { return nil }
+                return focused
+            }
+            if let editor { return editor }
+        }
+        throw DownbeatError("The name editor of \(name) did not open. Nothing was renamed.")
+    }
+
     /// The color name the Region inspector reports for the selected region.
     func regionColor() throws -> String {
         try showRegionInspector()

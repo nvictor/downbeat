@@ -5,8 +5,8 @@ import MIDIKit
 
 struct Region: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "List, create, export, import and delete regions.",
-        subcommands: [List.self, Create.self, Export.self, Import.self, Delete.self]
+        abstract: "List, create, rename, export, import and delete regions.",
+        subcommands: [List.self, Create.self, Rename.self, Export.self, Import.self, Delete.self]
     )
 
     struct List: ParsableCommand {
@@ -57,9 +57,9 @@ struct Region: ParsableCommand {
             if bar < 1 { throw ValidationError("--bar must be 1 or more.") }
             if !(1...999).contains(bars) { throw ValidationError("--bars must be 1 to 999.") }
             do {
-                try name.map(LogicApp.checkTrackName)
+                try name.map(LogicApp.checkRegionName)
             } catch {
-                throw ValidationError("The name cannot be empty or span lines.")
+                throw ValidationError("\(error)")
             }
         }
 
@@ -79,6 +79,32 @@ struct Region: ParsableCommand {
                 }
                 print("Created \(title), bars \(placement.startBar) to \(placement.endBar).")
             }
+        }
+    }
+
+    struct Rename: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Rename a region. Does not save the project."
+        )
+
+        @Argument(help: "New name.")
+        var name: String
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        func validate() throws {
+            do {
+                try LogicApp.checkRegionName(name)
+            } catch {
+                throw ValidationError("\(error)")
+            }
+        }
+
+        func run() throws {
+            let region = try target.app().renameRegion(options.reference, to: name)
+            let number = region.trackNumber.map(String.init) ?? "?"
+            print("\(number)  \(region.track)  \(region.name)")
         }
     }
 

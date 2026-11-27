@@ -282,3 +282,25 @@ func refusesABadDocument(json: String) {
     try data.write(to: url)
     #expect(try MIDIFile(contentsOf: url).notes().isEmpty)
 }
+
+@Test func prepareForImportMovesTheRegionToTheStart() throws {
+    let input = temporaryURL()
+    let output = temporaryURL()
+    defer { [input, output].forEach { try? FileManager.default.removeItem(at: $0) } }
+    // Everything starts at tick 2880, with a time signature and tempo there.
+    let body: [UInt8] = [
+        0x96, 0x40, 0xFF, 0x58, 0x04, 0x06, 0x03, 0x18, 0x08,
+        0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20,
+        0x83, 0x60, 0x90, 0x3C, 0x50,
+        0x83, 0x60, 0x80, 0x3C, 0x40,
+        0x00, 0xFF, 0x2F, 0x00,
+    ]
+    let header: [UInt8] = Array("MThd".utf8) + [0, 0, 0, 6, 0, 0, 0, 1, 0x01, 0xE0]
+    try Data(header + Array("MTrk".utf8) + [0, 0, 0, UInt8(body.count)] + body).write(to: input)
+    try MIDIFile.prepareForImport(input, to: output)
+    let smf = try SMF(data: Data(contentsOf: output))
+    #expect(smf.bounds.start == 0)
+    #expect(smf.bounds.end == 960)
+    #expect(smf.events.filter { $0.bytes[0] & 0xE0 == 0x80 }.map(\.tick) == [480, 960])
+    #expect(smf.events.contains { $0.tick == 0 && $0.bytes.starts(with: [0xFF, 0x58]) })
+}

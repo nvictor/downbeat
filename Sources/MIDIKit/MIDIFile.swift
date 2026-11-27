@@ -212,7 +212,44 @@ public final class MIDIFile {
         try check(MusicTrackNewMetaEvent(track!, beat, event), "MusicTrackNewMetaEvent")
     }
 
+    /// Moves every event `ticks` earlier.
+    private func shift(back ticks: Int) throws {
+        let beats = Double(ticks) / Double(try resolution())
+        var count: UInt32 = 0
+        try check(MusicSequenceGetTrackCount(sequence, &count), "MusicSequenceGetTrackCount")
+        var tracks: [MusicTrack] = []
+        var tempoTrack: MusicTrack?
+        try check(MusicSequenceGetTempoTrack(sequence, &tempoTrack), "MusicSequenceGetTempoTrack")
+        tracks.append(tempoTrack!)
+        for index in 0..<count {
+            var track: MusicTrack?
+            try check(MusicSequenceGetIndTrack(sequence, index, &track), "MusicSequenceGetIndTrack")
+            tracks.append(track!)
+        }
+        for track in tracks {
+            var length: MusicTimeStamp = 0
+            var size = UInt32(MemoryLayout<MusicTimeStamp>.size)
+            try check(
+                MusicTrackGetProperty(track, kSequenceTrackProperty_TrackLength, &length, &size),
+                "MusicTrackGetProperty"
+            )
+            try check(
+                MusicTrackMoveEvents(track, 0, kMusicTimeStamp_EndOfTrack, -beats),
+                "MusicTrackMoveEvents"
+            )
+            // The end-of-track marker does not move with the events.
+            length = max(length - beats, 0)
+            try check(
+                MusicTrackSetProperty(track, kSequenceTrackProperty_TrackLength, &length, size),
+                "MusicTrackSetProperty"
+            )
+        }
+    }
+
     /// Writes a copy of an exported region that Logic Pro imports with the same bounds.
+    ///
+    /// The copy starts at tick 0. Logic Pro exports project positions, and outside 4/4 it
+    /// reads a later start as an offset inside a bar, which lengthens the imported region.
     public static func prepareForImport(_ source: URL, to destination: URL) throws {
         let smf = try SMF(data: Data(contentsOf: source))
         let file = try MIDIFile(contentsOf: source)
@@ -221,6 +258,7 @@ public final class MIDIFile {
         if bounds.end > bounds.start, !smf.hasSizingEvent(atTick: bounds.end - 1) {
             try file.addMarker(atTick: bounds.end - 1)
         }
+        if bounds.start > 0 { try file.shift(back: bounds.start) }
         try file.save(to: destination)
     }
 
