@@ -77,14 +77,7 @@ extension LogicApp {
         guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let track = try Self.match(reference, in: trackSummaries())
         let end = bar + bars
-        for region in try regionSummaries() where region.trackNumber == track.number {
-            guard let start = region.startBar, let stop = region.endBar else {
-                throw DownbeatError("\(region.name) does not sit on bar lines, so free space cannot be checked.")
-            }
-            if start < end && bar < stop {
-                throw DownbeatError("\(region.name) already covers bars \(start) to \(stop) on \(track.name).")
-            }
-        }
+        try requireFree(bars: bar..<end, onTrack: track.number)
         // Logic Pro adds the imported track after the selected one, which keeps the target's number.
         _ = try selectTrack(reference)
         // Logic Pro would paste a MIDI region on an audio track too, where it makes no sound.
@@ -111,6 +104,44 @@ extension LogicApp {
             }
         }
         return target
+    }
+
+    /// Copies the one region that matches to another bar of its track, with Copy and Paste,
+    /// so everything about the region is kept.
+    public func duplicateRegion(_ reference: RegionReference, toBar bar: Int) throws -> Placement {
+        let source = try select(reference)
+        let target = Placement(
+            track: source.track, startBar: bar, endBar: bar + source.endBar - source.startBar
+        )
+        try requireFree(bars: target.startBar..<target.endBar, onTrack: Self.trackParts(source.track).number)
+        let count = try regions(on: source.track).count
+
+        // Copy acts on the focused pane, so focus the Tracks area first.
+        try select(track: source.track)
+        try select(regionStartingAt: source.startBar, on: source.track)
+        try choose(["Edit", "Copy"])
+
+        try undoingOnFailure { step in
+            try paste(on: target, expecting: count + 1, step: step)
+            guard try regions(on: target.track).contains(where: {
+                $0.help.flatMap(Self.bars).map { $0 == (target.startBar, target.endBar) } == true
+            }) else {
+                throw DownbeatError("The copy does not cover bars \(target.startBar) to \(target.endBar).")
+            }
+        }
+        return target
+    }
+
+    /// Throws unless no region of the track touches these bars.
+    private func requireFree(bars: Range<Int>, onTrack number: Int?) throws {
+        for region in try regionSummaries() where region.trackNumber == number {
+            guard let start = region.startBar, let end = region.endBar else {
+                throw DownbeatError("\(region.name) does not sit on bar lines, so free space cannot be checked.")
+            }
+            if start < bars.upperBound && bars.lowerBound < end {
+                throw DownbeatError("\(region.name) already covers bars \(start) to \(end) on \(region.track).")
+            }
+        }
     }
 
     /// Runs one undoable step, counting it if it changed anything, even when it then failed.

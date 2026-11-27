@@ -77,6 +77,15 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 
 `downbeat region rename` double-clicks the name in the Region inspector, writes into the editor and presses Return. The new name survives later edits.
 
+## Duplicating a region
+
+`downbeat region duplicate` uses `Edit > Copy` and `Edit > Paste` on the same track. It replaces Logic's clipboard.
+
+- Refused when a region already covers any of the target bars.
+- Tested: single and multi-channel regions, an empty region, a muted track, a target before the source.
+- Not tested: looped regions and region settings. The free space check ignores loops.
+- The copy keeps the name, so pick one of them with `--bar` afterwards.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

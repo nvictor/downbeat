@@ -74,6 +74,10 @@ downbeat note import notes.json --region "Verse" --project "Night Drive"
 downbeat region rename "Chorus" --region "Verse" --project "Night Drive"
 ```
 
+```bash
+downbeat region duplicate --region "Chorus" --to-bar 9 --project "Night Drive"
+```
+
 ## Edit notes
 
 ```bash
