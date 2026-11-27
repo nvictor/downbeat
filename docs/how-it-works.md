@@ -51,6 +51,18 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - `midi import` keeps the project tempo and prints the tracks it added.
 - Tested live: all of the above. `record` was tested without MIDI input, so no recorded region was checked.
 
+## Note JSON
+
+```json
+{"notes": [{"pitch": 60, "beat": 0, "duration": 1, "velocity": 100, "releaseVelocity": 64}]}
+```
+
+- `pitch`: 0 to 127. `beat` and `duration`: quarter notes, `beat` from the region start.
+- `velocity` and `releaseVelocity` are optional.
+- No channel: imported notes use the region's channel.
+- `note import` replaces every note and keeps the other events.
+- Refused: notes outside the region, and overlapping notes of the same pitch.
+
 ## What survives a region edit
 
 Test region: one software instrument track, bars 3 to 5, 3 notes, 75 CC events, 215 pitch bend events.

@@ -7,7 +7,10 @@ struct NoteCommands: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "note",
         abstract: "Read and edit the notes of a region.",
-        subcommands: [List.self, Add.self, Delete.self, Update.self, Transpose.self, Velocity.self, Quantize.self]
+        subcommands: [
+            List.self, Add.self, Delete.self, Update.self, Export.self, Import.self,
+            Transpose.self, Velocity.self, Quantize.self,
+        ]
     )
 
     struct Listing: Encodable {
@@ -100,7 +103,7 @@ struct NoteCommands: ParsableCommand {
                 try checkInside(end: bounds.start + beat + duration, of: bounds)
                 try file.addNote(
                     pitch: pitchNumber(pitch), beat: bounds.start + beat, duration: duration,
-                    velocity: velocity, channel: file.notes().first?.channel ?? 1
+                    velocity: velocity, channel: bounds.channel
                 )
                 return 1
             }
@@ -187,6 +190,60 @@ struct NoteCommands: ParsableCommand {
         }
     }
 
+    struct Export: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Print the notes of a region as JSON, for `note import`."
+        )
+
+        @OptionGroup var options: RegionOptions
+
+        func run() throws {
+            let document = try withTemporaryDirectory { directory in
+                let url = directory.appendingPathComponent("region.mid")
+                try LogicApp().exportRegion(options.reference, to: url)
+                let smf = try SMF(data: Data(contentsOf: url))
+                let origin = Double(smf.bounds.start) / Double(smf.ticksPerQuarter)
+                return try MIDIFile(contentsOf: url).document(origin: origin)
+            }
+            try printJSON(document)
+        }
+    }
+
+    struct Import: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Replace every note of a region with those of a JSON file.",
+            discussion: """
+                The file looks like the output of `note export`: \
+                {"notes": [{"pitch": 60, "beat": 0, "duration": 1, "velocity": 100}]}. \
+                Other events in the region stay.
+                """
+        )
+
+        @Argument(help: "JSON file.")
+        var input: String
+
+        @OptionGroup var options: RegionOptions
+        @OptionGroup var target: ProjectOption
+
+        func run() throws {
+            // Read the file first, so a bad one never touches Logic Pro.
+            let url = URL(fileURLWithPath: input).standardizedFileURL
+            guard let data = try? Data(contentsOf: url) else {
+                throw ValidationError("\(url.path) cannot be read.")
+            }
+            let document = try NoteDocument(json: data)
+            try edit(options, in: target) { file, region in
+                for note in document.notes {
+                    try checkInside(end: region.start + note.beat + note.duration, of: region)
+                }
+                let changed = try file.replaceNotes(with: document, origin: region.start, channel: region.channel)
+                guard changed else { return 0 }
+                print("The region now has \(document.notes.count) \(document.notes.count == 1 ? "note" : "notes").")
+                return nil
+            }
+        }
+    }
+
     struct Transpose: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Transpose every note.",
@@ -250,12 +307,20 @@ struct NoteCommands: ParsableCommand {
     }
 }
 
+/// A region in quarter notes from the beginning of its exported file.
+private struct Span {
+    let start: Double
+    let end: Double
+    /// The channel its events use, or 1 when it has none.
+    let channel: Int
+}
+
 /// Exports a region, applies `change` and puts the result back.
-/// `change` gets the region bounds in quarter notes and returns the number of notes changed.
+/// `change` returns the number of notes changed, or nil when it reports the result itself.
 private func edit(
     _ options: RegionOptions,
     in target: ProjectOption,
-    _ change: (MIDIFile, (start: Double, end: Double)) throws -> Int
+    _ change: (MIDIFile, Span) throws -> Int?
 ) throws {
     let app = try target.app()
     try withTemporaryDirectory { directory in
@@ -265,15 +330,18 @@ private func edit(
         let smf = try SMF(data: Data(contentsOf: exported))
         let ticks = Double(smf.ticksPerQuarter)
         let file = try MIDIFile(contentsOf: exported)
-        let count = try change(file, (Double(smf.bounds.start) / ticks, Double(smf.bounds.end) / ticks))
-        guard count > 0 else {
+        let count = try change(file, Span(
+            start: Double(smf.bounds.start) / ticks, end: Double(smf.bounds.end) / ticks,
+            channel: smf.channels.min() ?? 1
+        ))
+        guard count != 0 else {
             print("No notes needed changing.")
             return
         }
         try file.save(to: edited)
         try MIDIFile.keepBounds(of: edited, start: smf.bounds.start, end: smf.bounds.end)
         try app.importRegion(edited, at: placement)
-        print("Changed \(count) \(count == 1 ? "note" : "notes").")
+        if let count { print("Changed \(count) \(count == 1 ? "note" : "notes").") }
     }
 }
 
@@ -297,7 +365,7 @@ private func checkVelocity(_ velocity: Int) throws {
 }
 
 /// `end` and `bounds` are in quarter notes from the beginning of the file.
-private func checkInside(end: Double, of bounds: (start: Double, end: Double)) throws {
+private func checkInside(end: Double, of bounds: Span) throws {
     guard end <= bounds.end + 1e-6 else {
         let length = (bounds.end - bounds.start).formatted()
         throw DownbeatError("The note must end by beat \(length), the end of the region.")

@@ -90,6 +90,16 @@ downbeat note delete --track 1 --bar 3 --project MySong --id 2
 downbeat note update --track 1 --bar 3 --project MySong --id 2 --pitch D3
 ```
 
+Edit many notes at once, as JSON:
+
+```bash
+downbeat note export --track 1 --bar 3 > notes.json
+```
+
+```bash
+downbeat note import notes.json --track 1 --bar 3 --project MySong
+```
+
 - Edits replace the region. `--project` must match the front project.
 - Keep hands off keyboard and mouse while a command runs.
 - Regions with Loop, playback settings, a custom color or several MIDI channels are refused.

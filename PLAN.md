@@ -4,11 +4,6 @@
 
 Names can change.
 
-### Notes
-
-- [ ] `downbeat note export --region "Intro" > notes.json`
-- [ ] `downbeat note import --region "Intro" notes.json`
-
 ### Needs experiments
 
 - [ ] `downbeat region create --track "Drums" --bar 1 --bars 4`

@@ -235,3 +235,36 @@ func refusesBadPitches(text: String) {
     #expect(try file.updateNote(id: 2, velocity: 80) == false)
     #expect(throws: LayoutError.self) { _ = try file.updateNote(id: 2, pitch: 60, beat: 0.1) }
 }
+
+@Test func exportedNotesImportWithoutChange() throws {
+    let url = temporaryURL()
+    defer { try? FileManager.default.removeItem(at: url) }
+    try fixture().write(to: url)
+    let file = try MIDIFile(contentsOf: url)
+    let exported = try file.document(origin: 0)
+    let reread = try NoteDocument(json: JSONEncoder().encode(exported))
+    #expect(reread == exported)
+    #expect(try file.replaceNotes(with: reread, origin: 0, channel: 2) == false)
+}
+
+@Test func replaceNotesKeepsTheOtherEvents() throws {
+    let document = try NoteDocument(json: Data(#"{"notes": [{"pitch": 67, "beat": 1, "duration": 2}]}"#.utf8))
+    let (before, after) = try roundTrip { _ = try $0.replaceNotes(with: document, origin: 0, channel: 2) }
+    func others(_ smf: SMF) -> [SMFEvent] {
+        meaningful(smf).filter { ![0x80, 0x90].contains($0.bytes[0] & 0xF0) }
+    }
+    #expect(others(after) == others(before))
+    let notes = meaningful(after).filter { [0x80, 0x90].contains($0.bytes[0] & 0xF0) }
+    #expect(notes.map(\.bytes) == [[0x91, 67, 100], [0x81, 67, 64]])
+    #expect(notes.map(\.tick) == [480, 1440])
+}
+
+@Test(arguments: [
+    "nonsense", #"{}"#, #"{"notes": [{"beat": 0, "duration": 1}]}"#,
+    #"{"notes": [{"pitch": "C3", "beat": 0, "duration": 1}]}"#,
+    #"{"notes": [{"pitch": 200, "beat": 0, "duration": 1}]}"#,
+    #"{"notes": [{"pitch": 60, "beat": -1, "duration": 1}]}"#,
+])
+func refusesABadDocument(json: String) {
+    #expect(throws: LayoutError.self) { try NoteDocument(json: Data(json.utf8)) }
+}

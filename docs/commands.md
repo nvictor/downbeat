@@ -31,6 +31,8 @@ downbeat note list <region> [--json]
 downbeat note add <region> --project <name> --pitch C3 --beat 0 --duration 0.5 [--velocity 100]
 downbeat note delete <region> --project <name> --id n
 downbeat note update <region> --project <name> --id n [--pitch p] [--beat b] [--duration d] [--velocity v]
+downbeat note export <region>                                    # JSON on stdout
+downbeat note import <file.json> <region> --project <name>      # replaces the notes
 downbeat note transpose <region> --project <name> --semitones n
 downbeat note velocity <region> --project <name> --value n
 downbeat note quantize <region> --project <name> --division 1/16
