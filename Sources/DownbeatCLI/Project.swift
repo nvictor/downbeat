@@ -28,7 +28,7 @@ struct Project: ParsableCommand {
         @Option(help: "Folder for the project. Default: ~/Music/Logic.")
         var directory: String?
 
-        @Option(help: "A .logicx project to start from. Default: the one set with `downbeat project template`.")
+        @Option(help: "A .logicx project to start from. Default: the one set with `downbeat logic project template`.")
         var template: String?
 
         func validate() throws {
@@ -50,7 +50,7 @@ struct Project: ParsableCommand {
             guard FileManager.default.fileExists(atPath: source.path) else {
                 throw ValidationError("""
                     No template at \(source.path). Save an empty project in Logic Pro once, then run \
-                    `downbeat project template <path.logicx>`.
+                    `downbeat logic project template <path.logicx>`.
                     """)
             }
             let destination = folder.appending(path: "\(name).logicx")

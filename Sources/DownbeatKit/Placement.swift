@@ -441,7 +441,7 @@ extension LogicApp {
     func movePlayhead(toBar bar: Int) throws {
         let transport = try status()
         guard !transport.playing, !transport.recording else {
-            throw DownbeatError("Logic Pro is playing. Run `downbeat stop` first.")
+            throw DownbeatError("Logic Pro is playing. Run `downbeat logic stop` first.")
         }
         // While stopped, the stop button goes to the beginning.
         try press("stopButton")

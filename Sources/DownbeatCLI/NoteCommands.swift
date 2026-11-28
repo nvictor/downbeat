@@ -113,13 +113,13 @@ struct NoteCommands: ParsableCommand {
     struct Delete: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Delete one note from a region.",
-            discussion: "Take the id from `downbeat note list`. Ids change after every edit."
+            discussion: "Take the id from `downbeat logic note list`. Ids change after every edit."
         )
 
         @OptionGroup var options: RegionOptions
         @OptionGroup var target: ProjectOption
 
-        @Option(help: "Note id from `downbeat note list`.")
+        @Option(help: "Note id from `downbeat logic note list`.")
         var id: Int
 
         func validate() throws {
@@ -139,7 +139,7 @@ struct NoteCommands: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Change one note of a region.",
             discussion: """
-                Take the id from `downbeat note list`. Ids change after every edit. \
+                Take the id from `downbeat logic note list`. Ids change after every edit. \
                 Give at least one of --pitch, --beat, --duration and --velocity.
                 """
         )
@@ -147,7 +147,7 @@ struct NoteCommands: ParsableCommand {
         @OptionGroup var options: RegionOptions
         @OptionGroup var target: ProjectOption
 
-        @Option(help: "Note id from `downbeat note list`.")
+        @Option(help: "Note id from `downbeat logic note list`.")
         var id: Int
 
         @Option(help: "Name or number, for example F#3 or 66. Middle C is C3.")
@@ -192,7 +192,7 @@ struct NoteCommands: ParsableCommand {
 
     struct Export: ParsableCommand {
         static let configuration = CommandConfiguration(
-            abstract: "Print the notes of a region as JSON, for `note import`."
+            abstract: "Print the notes of a region as JSON, for `logic note import`."
         )
 
         @OptionGroup var options: RegionOptions
@@ -213,7 +213,7 @@ struct NoteCommands: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Replace every note of a region with those of a JSON file.",
             discussion: """
-                The file looks like the output of `note export`: \
+                The file looks like the output of `logic note export`: \
                 {"notes": [{"pitch": 60, "beat": 0, "duration": 1, "velocity": 100}]}. \
                 Other events in the region stay.
                 """

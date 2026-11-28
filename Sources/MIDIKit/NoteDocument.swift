@@ -1,6 +1,6 @@
 import Foundation
 
-/// The notes of a region as JSON, written by `note export` and read by `note import`.
+/// The notes of a region as JSON, written by `logic note export` and read by `logic note import`.
 public struct NoteDocument: Codable, Equatable, Sendable {
     public struct Entry: Codable, Equatable, Sendable {
         /// 0 to 127.

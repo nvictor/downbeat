@@ -70,7 +70,7 @@ struct PluginCommands: ParsableCommand {
         @Argument(help: "Name or number of the track.")
         var track: String
 
-        @Argument(help: "Name or number of the plugin, from `plugin list`.")
+        @Argument(help: "Name or number of the plugin, from `logic plugin list`.")
         var plugin: String
 
         @OptionGroup var target: ProjectOption
@@ -89,7 +89,7 @@ struct PluginCommands: ParsableCommand {
         @Argument(help: "Name or number of the track.")
         var track: String
 
-        @Argument(help: "Name or number of the plugin, from `plugin list`.")
+        @Argument(help: "Name or number of the plugin, from `logic plugin list`.")
         var plugin: String
 
         @Flag(help: "Turn the bypass off.")

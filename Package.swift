@@ -13,15 +13,18 @@ let package = Package(
     targets: [
         .target(name: "MIDIKit"),
         .target(name: "DownbeatKit"),
+        .target(name: "EZdrummerKit", dependencies: ["MIDIKit"]),
         .executableTarget(
             name: "DownbeatCLI",
             dependencies: [
                 "MIDIKit",
                 "DownbeatKit",
+                "EZdrummerKit",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
         .testTarget(name: "MIDIKitTests", dependencies: ["MIDIKit"]),
         .testTarget(name: "DownbeatKitTests", dependencies: ["DownbeatKit"]),
+        .testTarget(name: "EZdrummerKitTests", dependencies: ["EZdrummerKit"]),
     ]
 )

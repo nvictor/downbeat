@@ -34,7 +34,7 @@ public struct LogicApp {
 
     public init() throws {
         guard AXIsProcessTrusted() else {
-            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat logic check`.")
         }
         guard let running = Self.process else { throw DownbeatError("Logic Pro is not running.") }
         self.running = running

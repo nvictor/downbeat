@@ -226,7 +226,7 @@ struct Region: ParsableCommand {
     struct Import: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Replace a region with a MIDI file, on the same track and bars.",
-            discussion: "Use a file made by `downbeat region export`, so its length matches the region."
+            discussion: "Use a file made by `downbeat logic region export`, so its length matches the region."
         )
 
         @Argument(help: "Edited .mid file.")

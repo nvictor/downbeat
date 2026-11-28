@@ -78,7 +78,7 @@ extension LogicApp {
         guard dialogs.isEmpty else { throw DownbeatError("A dialog is open in Logic Pro. Close it first.") }
         let all = try tracks()
         let matches = try regionSummaries().filter { $0.matches(reference) }
-        guard let match = matches.first else { throw DownbeatError("No region matches. See `downbeat region list`.") }
+        guard let match = matches.first else { throw DownbeatError("No region matches. See `downbeat logic region list`.") }
         guard matches.count == 1 else {
             throw DownbeatError("\(matches.count) regions match. Narrow it with --region, --track and --bar.")
         }

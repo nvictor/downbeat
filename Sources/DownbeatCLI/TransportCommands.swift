@@ -19,7 +19,7 @@ struct Stop: ParsableCommand {
 
 struct Record: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Start recording. End it with `downbeat stop`."
+        abstract: "Start recording. End it with `downbeat logic stop`."
     )
 
     @OptionGroup var target: ProjectOption

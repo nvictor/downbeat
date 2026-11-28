@@ -149,7 +149,7 @@ extension LogicApp {
         let byName = plugins.filter { $0.name.caseInsensitiveCompare(reference) == .orderedSame }
         let matches = byName.isEmpty ? plugins.filter { String($0.number) == reference } : byName
         guard let first = matches.first else {
-            throw DownbeatError("No plugin is named or numbered \(reference). See `downbeat plugin list`.")
+            throw DownbeatError("No plugin is named or numbered \(reference). See `downbeat logic plugin list`.")
         }
         guard matches.count == 1 else {
             throw DownbeatError("\(matches.count) plugins are named \(reference). Use the plugin number.")

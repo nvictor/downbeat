@@ -1,17 +1,23 @@
 # downbeat
 
-A command line tool for Logic Pro: start projects, control playback, manage tracks, volume, pan and plugins, and edit MIDI notes.
+A command line tool for drum arrangements and Logic Pro.
 
-Needs macOS 15+, Logic Pro (English), and Accessibility and Automation permissions.
+| Group | Does | Needs |
+| --- | --- | --- |
+| `downbeat midi` | Builds, inspects, edits and humanizes drum MIDI. Lists ports. | macOS 15+ |
+| `downbeat ezdrummer` | Reads saved EZdrummer 3 projects. | macOS 15+ |
+| `downbeat logic` | Starts projects, controls playback, tracks, mixer and plugins, edits notes. | Logic Pro (English), Accessibility and Automation permissions |
 
 ## Install
 
 ```bash
-swift build -c release
+scripts/install.sh
 ```
 
+It pulls this repo and a `skills` checkout next to it, builds, and installs to `~/.local/bin`. Run it again to update. To build the source as it is:
+
 ```bash
-install -m 755 .build/release/downbeat ~/.local/bin/downbeat
+scripts/install.sh --no-pull
 ```
 
 If `~/.local/bin` is not in your `PATH`, add it, then open a new terminal window:
@@ -20,10 +26,28 @@ If `~/.local/bin` is not in your `PATH`, add it, then open a new terminal window
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
 ```
 
+## Drum arrangements
+
+Write grooves in [GUS](https://github.com/nvictor/gus) and the form in [PAL](https://github.com/nvictor/pal). See [Arrangements](docs/arrangements.md).
+
+```bash
+downbeat midi build examples/artemis.json --output /tmp/artemis --per part
+```
+
+```bash
+downbeat midi inspect "/tmp/artemis/chorus/08 fill a.mid" --arrangement examples/artemis.json
+```
+
+```bash
+downbeat midi edit examples/artemis.json examples/artemis-ride.json --dry-run
+```
+
+## Logic Pro setup
+
 With Logic Pro open, check the setup:
 
 ```bash
-downbeat check
+downbeat logic check
 ```
 
 Allow what it lists under System Settings > Privacy & Security, then run it again.
@@ -36,101 +60,101 @@ Allow what it lists under System Settings > Privacy & Security, then run it agai
 Once: save an empty project in Logic Pro, then keep it as the template.
 
 ```bash
-downbeat project template ~/Music/Logic/Blank.logicx
+downbeat logic project template ~/Music/Logic/Blank.logicx
 ```
 
 Show where the current template is kept:
 
 ```bash
-downbeat project template
+downbeat logic project template
 ```
 
 Then:
 
 ```bash
-downbeat project new "Night Drive" --tempo 92 --signature 6/8 --key "A minor"
+downbeat logic project new "Night Drive" --tempo 92 --signature 6/8 --key "A minor"
 ```
 
 ## Tracks
 
 ```bash
-downbeat track list
+downbeat logic track list
 ```
 
 ```bash
-downbeat track create --type instrument --name "Bass" --project "Night Drive"
+downbeat logic track create --type instrument --name "Bass" --project "Night Drive"
 ```
 
 ```bash
-downbeat track rename 1 "Drums" --project "Night Drive"
+downbeat logic track rename 1 "Drums" --project "Night Drive"
 ```
 
 ```bash
-downbeat track mute "Bass" --project "Night Drive"
+downbeat logic track mute "Bass" --project "Night Drive"
 ```
 
 ```bash
-downbeat mixer volume "Bass" --db -6 --project "Night Drive"
+downbeat logic mixer volume "Bass" --db -6 --project "Night Drive"
 ```
 
 ```bash
-downbeat mixer pan "Bass" --value -20 --project "Night Drive"
+downbeat logic mixer pan "Bass" --value -20 --project "Night Drive"
 ```
 
 ```bash
-downbeat marker create "Chorus" --bar 9 --project "Night Drive"
+downbeat logic marker create "Chorus" --bar 9 --project "Night Drive"
 ```
 
 ```bash
-downbeat plugin list "Bass"
+downbeat logic plugin list "Bass"
 ```
 
 ```bash
-downbeat plugin add "Bass" "Limiter" --project "Night Drive"
+downbeat logic plugin add "Bass" "Limiter" --project "Night Drive"
 ```
 
 ```bash
-downbeat plugin remove "Bass" "Limiter" --project "Night Drive"
+downbeat logic plugin remove "Bass" "Limiter" --project "Night Drive"
 ```
 
 ```bash
-downbeat plugin bypass "Bass" "Compressor" --project "Night Drive"
+downbeat logic plugin bypass "Bass" "Compressor" --project "Night Drive"
 ```
 
 ## Play and save
 
 ```bash
-downbeat play
+downbeat logic play
 ```
 
 ```bash
-downbeat stop
+downbeat logic stop
 ```
 
 ```bash
-downbeat project save --project "Night Drive"
+downbeat logic project save --project "Night Drive"
 ```
 
 ## Write a part
 
 ```bash
-downbeat region create --track "Bass" --bar 1 --bars 4 --name "Verse" --project "Night Drive"
+downbeat logic region create --track "Bass" --bar 1 --bars 4 --name "Verse" --project "Night Drive"
 ```
 
 ```bash
-downbeat note import notes.json --region "Verse" --project "Night Drive"
+downbeat logic note import notes.json --region "Verse" --project "Night Drive"
 ```
 
 ```bash
-downbeat region rename "Chorus" --region "Verse" --project "Night Drive"
+downbeat logic region rename "Chorus" --region "Verse" --project "Night Drive"
 ```
 
 ```bash
-downbeat region duplicate --region "Chorus" --to-bar 9 --project "Night Drive"
+downbeat logic region duplicate --region "Chorus" --to-bar 9 --project "Night Drive"
 ```
 
 ```bash
-downbeat region move --region "Chorus" --bar 9 --to-bar 17 --project "Night Drive"
+downbeat logic region move --region "Chorus" --bar 9 --to-bar 17 --project "Night Drive"
 ```
 
 ## MIDI ports
@@ -142,61 +166,61 @@ downbeat midi ports
 ## Audio files
 
 ```bash
-downbeat audio import take.wav --track "Vocals" --bar 5 --project "Night Drive"
+downbeat logic audio import take.wav --track "Vocals" --bar 5 --project "Night Drive"
 ```
 
 ```bash
-downbeat audio export --track "Vocals" --output vocals.wav
+downbeat logic audio export --track "Vocals" --output vocals.wav
 ```
 
 ## Split and join
 
 ```bash
-downbeat region split --region "Chorus" --at-bar 13 --project "Night Drive"
+downbeat logic region split --region "Chorus" --at-bar 13 --project "Night Drive"
 ```
 
 ```bash
-downbeat region join --region "Chorus" --bar 9 --project "Night Drive"
+downbeat logic region join --region "Chorus" --bar 9 --project "Night Drive"
 ```
 
 ## Edit notes
 
 ```bash
-downbeat check
+downbeat logic check
 ```
 
 ```bash
-downbeat region list
+downbeat logic region list
 ```
 
 ```bash
-downbeat note list --track 1 --bar 3
+downbeat logic note list --track 1 --bar 3
 ```
 
 ```bash
-downbeat note transpose --track 1 --bar 3 --project MySong --semitones=-2
+downbeat logic note transpose --track 1 --bar 3 --project MySong --semitones=-2
 ```
 
 ```bash
-downbeat note add --track 1 --bar 3 --project MySong --pitch F#3 --beat 0 --duration 0.5
+downbeat logic note add --track 1 --bar 3 --project MySong --pitch F#3 --beat 0 --duration 0.5
 ```
 
 ```bash
-downbeat note delete --track 1 --bar 3 --project MySong --id 2
+downbeat logic note delete --track 1 --bar 3 --project MySong --id 2
 ```
 
 ```bash
-downbeat note update --track 1 --bar 3 --project MySong --id 2 --pitch D3
+downbeat logic note update --track 1 --bar 3 --project MySong --id 2 --pitch D3
 ```
 
 Edit many notes at once, as JSON:
 
 ```bash
-downbeat note export --track 1 --bar 3 > notes.json
+downbeat logic note export --track 1 --bar 3 > notes.json
 ```
 
 ```bash
-downbeat note import notes.json --track 1 --bar 3 --project MySong
+downbeat logic note import notes.json --track 1 --bar 3 --project MySong
 ```
 
 - Edits replace the region. `--project` must match the front project.
@@ -206,12 +230,24 @@ downbeat note import notes.json --track 1 --bar 3 --project MySong
 ## More
 
 - [Commands](docs/commands.md)
+- [Arrangements](docs/arrangements.md)
+- [EZdrummer](docs/ezdrummer.md)
 - [Plan](PLAN.md)
 - [How it works and limits](docs/how-it-works.md)
 - Agent skill: [skills/downbeat](https://github.com/nvictor/skills/tree/main/downbeat)
+
+## Releasing a change
+
+For every change a user can see:
+
+1. Raise `version` in `Sources/DownbeatCLI/Downbeat.swift`.
+2. If the skill relies on the change, raise `minimum` in its `scripts/check-update.sh`.
+3. Commit and push both repos.
+
+The skill runs `scripts/check-update.sh` before using downbeat, and tells the user what to update.
 
 ## License
 
 [MIT](LICENSE)
 
-Logic and Logic Pro are trademarks of Apple Inc., registered in the U.S. and other countries and regions. This project is not affiliated with or endorsed by Apple Inc.
+Logic and Logic Pro are trademarks of Apple Inc., registered in the U.S. and other countries and regions. This project is not affiliated with or endorsed by Apple Inc. EZdrummer is a trademark of Toontrack Music AB, which is not affiliated with this project either.

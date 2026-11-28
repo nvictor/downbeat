@@ -1,0 +1,15 @@
+{
+  "operations": [
+    {
+      "op": "replace",
+      "section": "chorus",
+      "articulations": ["hi-hat"],
+      "with": "ride-bow",
+      "every": 0.5,
+      "velocity": [112, 92]
+    },
+    { "op": "remove", "section": "chorus", "bars": "8", "beats": [4, 5], "articulations": ["ride"] },
+    { "op": "remove", "section": "chorus", "bars": "15", "beats": [4, 5], "articulations": ["ride"] },
+    { "op": "remove", "section": "chorus", "part": "16 fill b", "articulations": ["ride"] }
+  ]
+}

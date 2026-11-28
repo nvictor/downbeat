@@ -45,7 +45,7 @@ public struct NewProject: Sendable {
         try tempo.map(ProjectSettings.checkTempo)
         try signature.map(ProjectSettings.checkSignature)
         guard AXIsProcessTrusted() else {
-            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat logic check`.")
         }
         // Checked before copying, so a refusal leaves no new project behind.
         try LogicApp.requireNoUnsavedWork()
@@ -116,7 +116,7 @@ extension LogicApp {
     @discardableResult
     public static func open(project: URL) throws -> LogicApp {
         guard AXIsProcessTrusted() else {
-            throw DownbeatError("Accessibility permission is missing. Run `downbeat check`.")
+            throw DownbeatError("Accessibility permission is missing. Run `downbeat logic check`.")
         }
         guard project.pathExtension == "logicx", FileManager.default.fileExists(atPath: project.path) else {
             throw DownbeatError("\(project.path) is not a .logicx project.")

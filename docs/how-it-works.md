@@ -1,5 +1,7 @@
 # How downbeat works, and its limits
 
+Covers `downbeat logic`. The other groups work on files: see [Arrangements](arrangements.md) and [EZdrummer](ezdrummer.md).
+
 downbeat drives Logic Pro through accessibility, keystrokes, mouse clicks, AppleScript and MIDI files.
 
 Tested on Logic Pro 13.0, macOS 27.2.1, Swift 6.4.2, English UI.
@@ -7,7 +9,7 @@ Tested on Logic Pro 13.0, macOS 27.2.1, Swift 6.4.2, English UI.
 ## Editing a region
 
 A region is exported, edited as a MIDI file, and put back on the same track and bars.
-`downbeat region import` does this:
+`downbeat logic region import` does this:
 
 1. Read the selected region's track, start bar and end bar.
 2. Add text events on the first and last tick of the file, to fix the region length, and move everything to start at tick 0.
@@ -18,7 +20,7 @@ A region is exported, edited as a MIDI file, and put back on the same track and 
 7. Click the original track's header, `Edit > Paste` at the start bar.
 8. Click the extra track's header, `Track > Delete Track`.
 
-The header clicks focus the Tracks area, because `Cut`, `Delete` and `Paste` act on the focused pane. Tested with `note transpose` while the Piano Roll had focus.
+The header clicks focus the Tracks area, because `Cut`, `Delete` and `Paste` act on the focused pane. Tested with `logic note transpose` while the Piano Roll had focus.
 
 If a step fails, the finished steps are undone. Tested with failures injected after Cut and after Paste.
 
@@ -26,7 +28,7 @@ Regions with Loop, Mute or playback settings are refused, read from the Region i
 
 ## Starting a project
 
-`downbeat project new`:
+`downbeat logic project new`:
 
 1. Refuses if an open project has unsaved changes.
 2. Copies the template, without its autosave, backup and undo data.
@@ -44,12 +46,12 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 
 ## Transport, mute and delete
 
-- `play`, `stop` and `record` press the control bar buttons. `stop` does nothing when already stopped, because the button would move the playhead.
+- `logic play`, `logic stop` and `logic record` press the control bar buttons. `logic stop` does nothing when already stopped, because the button would move the playhead.
 - Mute and Solo are clicked. Accessibility presses change nothing.
-- A solo hides mute states: `track list` does not report them, and `track mute` is refused.
-- `region delete` clicks the track header, selects the region, then uses `Edit > Delete`.
-- `midi import` keeps the project tempo and prints the tracks it added.
-- Tested live: all of the above. `record` was tested without MIDI input, so no recorded region was checked.
+- A solo hides mute states: `logic track list` does not report them, and `logic track mute` is refused.
+- `logic region delete` clicks the track header, selects the region, then uses `Edit > Delete`.
+- `logic midi import` keeps the project tempo and prints the tracks it added.
+- Tested live: all of the above. `logic record` was tested without MIDI input, so no recorded region was checked.
 
 ## Note JSON
 
@@ -60,12 +62,12 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 - `pitch`: 0 to 127. `beat` and `duration`: quarter notes, `beat` from the region start.
 - `velocity` and `releaseVelocity` are optional.
 - No channel: imported notes use the region's channel.
-- `note import` replaces every note and keeps the other events.
+- `logic note import` replaces every note and keeps the other events.
 - Refused: notes outside the region, and overlapping notes of the same pitch.
 
 ## Creating a region
 
-`downbeat region create` imports a MIDI file holding only a name and two text events, cuts the region, pastes it on the target track and deletes the extra track.
+`downbeat logic region create` imports a MIDI file holding only a name and two text events, cuts the region, pastes it on the target track and deletes the extra track.
 
 - Length comes from the meter at the start bar. A meter change inside the region is caught by the final bar check, which undoes the steps.
 - Tested in 4/4 and 6/8, on software instrument and external MIDI tracks.
@@ -75,11 +77,11 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 
 ## Renaming a region
 
-`downbeat region rename` double-clicks the name in the Region inspector, writes into the editor and presses Return. The new name survives later edits.
+`downbeat logic region rename` double-clicks the name in the Region inspector, writes into the editor and presses Return. The new name survives later edits.
 
 ## Moving and duplicating a region
 
-`downbeat region duplicate` uses `Edit > Copy` and `Edit > Paste` on the same track. `downbeat region move` uses `Cut` instead of `Copy`. Both replace Logic's clipboard.
+`downbeat logic region duplicate` uses `Edit > Copy` and `Edit > Paste` on the same track. `downbeat logic region move` uses `Cut` instead of `Copy`. Both replace Logic's clipboard.
 
 - Refused when another region already covers any of the target bars. A move may overlap its own old bars.
 - Tested: single and multi-channel regions, an empty region, a muted track, a target before the source.
@@ -89,20 +91,20 @@ Logic Pro keeps the window layout in the project, so close extra windows before 
 
 ## Volume and pan
 
-`downbeat mixer volume` steps the fader in the track header until its level is closest to the one asked, then prints the level reached.
+`downbeat logic mixer volume` steps the fader in the track header until its level is closest to the one asked, then prints the level reached.
 
 - The track does not need to be selected or on screen.
 - Tested from -∞ to +6 dB. Every level tried was reached exactly.
 - Needs the volume slider shown in the track header.
 - External MIDI tracks are refused: their volume is not in dB.
 
-`downbeat mixer pan` steps the pan knob of the track header, from -64 to 63. Tested at both ends, the middle and between, on audio, software instrument and external MIDI tracks.
+`downbeat logic mixer pan` steps the pan knob of the track header, from -64 to 63. Tested at both ends, the middle and between, on audio, software instrument and external MIDI tracks.
 
 Neither command is tested with automation.
 
 ## Markers
 
-`downbeat marker create` reads the Marker List, moves the playhead, uses `Navigate > Create Marker` and `Rename Marker`, then reads the list again.
+`downbeat logic marker create` reads the Marker List, moves the playhead, uses `Navigate > Create Marker` and `Rename Marker`, then reads the list again.
 
 - Refused when a marker already sits in the bar, and for names with `#`, which Logic replaces with the marker number.
 - The Marker List is closed afterwards, even if it was open: with focus, it disables the marker commands.
@@ -115,25 +117,25 @@ Neither command is tested with automation.
 
 ## Plugins
 
-`downbeat plugin list` selects the track, reads the channel strip in the inspector, then restores the selection. `downbeat plugin bypass` presses the bypass checkbox of a slot.
+`downbeat logic plugin list` selects the track, reads the channel strip in the inspector, then restores the selection. `downbeat logic plugin bypass` presses the bypass checkbox of a slot.
 
 - The list follows the signal: the instrument first, then the effects. Accessibility lists them the other way round.
 - Pick a plugin by name or number. Use the number when two share a name.
 - Tested on software instrument tracks. The result was checked in the Mixer.
-- `plugin add` picks the name from Logic's plugin menu, categories and Audio Units included, then closes the window Logic opens. A new effect goes last.
+- `logic plugin add` picks the name from Logic's plugin menu, categories and Audio Units included, then closes the window Logic opens. A new effect goes last.
 - `--format` picks a menu format such as `Stereo` or `Dual Mono`. Default: the first one.
-- `plugin remove` picks `No Plug-in` in the slot's menu. The settings are lost. Undo was not tested.
+- `logic plugin remove` picks `No Plug-in` in the slot's menu. The settings are lost. Undo was not tested.
 - Add and remove tested on software instrument and audio tracks. Removing an instrument works too. External MIDI tracks are refused.
 - Seen once: the instrument slot was named `input` and its checkbox kept a stale state, while the Mixer was right. It went back to normal after effects were removed. downbeat reports the bypass as unknown and refuses to change it.
 - Not tested: MIDI effects, aux and output channels, third-party plugins.
 
 ## Audio files
 
-`downbeat audio import` selects an audio track, moves the playhead and uses `File > Import > Audio File…`.
+`downbeat logic audio import` selects an audio track, moves the playhead and uses `File > Import > Audio File…`.
 
 - Refused on other track types, and when a region already touches the bars the file would cover. Those bars are estimated from the tempo and meter at the start bar.
 
-`downbeat audio export` uses `File > Export > 1 Track as Audio File…` into an empty folder, then moves the file to the output.
+`downbeat logic audio export` uses `File > Export > 1 Track as Audio File…` into an empty folder, then moves the file to the output.
 
 - Sets the file type to WAVE. Bit depth, range, normalize, effects bypass and volume/pan automation stay as Logic Pro last used them.
 - The file starts at the project start, so positions line up. Seen with `Trim Silence at File End`.
@@ -142,7 +144,7 @@ Neither command is tested with automation.
 
 ## Regions off the bar lines
 
-`region delete`, `move`, `duplicate` and `rename` work on any region, picked by the bar it starts in. `region list` marks the ones off the bar lines, and shows every bar they touch.
+`logic region delete`, `move`, `duplicate` and `rename` work on any region, picked by the bar it starts in. `logic region list` marks the ones off the bar lines, and shows every bar they touch.
 
 - Two regions starting in the same bar of a track cannot be edited this way. Refused.
 - A moved or copied region starts on the first beat of the target bar.
@@ -155,14 +157,14 @@ Neither command is tested with automation.
 
 Both use the `Edit` menu of the Tracks area. The menu bar has neither command.
 
-`downbeat region split` cuts at the first beat of a bar inside the region.
+`downbeat logic region split` cuts at the first beat of a bar inside the region.
 
 - `--notes` answers Logic's question about MIDI notes crossing the cut. Default: `keep`.
-- `keep`: the note stays in the first part. Exports and `note list` clip it at the region end.
+- `keep`: the note stays in the first part. Exports and `logic note list` clip it at the region end.
 - `shorten`: the note ends at the cut.
 - `split`: Logic then exports the second part of the note with no length. downbeat refuses to read or edit that region.
 
-`downbeat region join` joins a region with the next one on its track, when they touch.
+`downbeat logic region join` joins a region with the next one on its track, when they touch.
 
 - Refused when Logic asks a question first, as for audio that needs a new file. That case was not tested.
 - The first region's name is restored if Logic changes it.
@@ -204,7 +206,7 @@ Without a fix the count grew on each pass: 215, 428, 854.
   - 60 ticks apart or less: filled in. 240 ticks apart: left alone. Between them: not tested.
   - Ramps are filled on a 1/256 note grid (7.5 ticks at 480). Closer events get a midpoint.
   - Not checked whether it happens on import or on export.
-- Fix: `downbeat region export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
+- Fix: `downbeat logic region export` removes pitch bend events that lie on a ramp denser than 1/256 note (`MIDIFile.thinPitchBend`).
 - Side effects
   - Real recorded data that dense, on a straight line, is thinned too.
   - Events 8 to 60 ticks apart are filled to the 1/256 grid by the first pass.

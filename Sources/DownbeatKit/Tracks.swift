@@ -32,7 +32,7 @@ extension LogicApp {
         let byName = tracks.filter { $0.name == reference }
         let matches = byName.isEmpty ? tracks.filter { $0.number.map(String.init) == reference } : byName
         guard let first = matches.first else {
-            throw DownbeatError("No track is named or numbered \(reference). See `downbeat track list`.")
+            throw DownbeatError("No track is named or numbered \(reference). See `downbeat logic track list`.")
         }
         guard matches.count == 1 else {
             throw DownbeatError("\(matches.count) tracks are named \(reference). Use the track number.")

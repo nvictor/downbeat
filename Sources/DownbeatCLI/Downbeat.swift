@@ -4,13 +4,8 @@ import ArgumentParser
 struct Downbeat: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "downbeat",
-        abstract: "Control Logic Pro from the command line.",
-        version: "0.1.0",
-        subcommands: [
-            Check.self, Inspect.self, StatusCommand.self, Project.self, Tempo.self,
-            TrackCommands.self, Region.self, NoteCommands.self, MIDICommands.self, MixerCommands.self,
-            MarkerCommands.self, PluginCommands.self, AudioCommands.self,
-            Play.self, Stop.self, Record.self,
-        ]
+        abstract: "Work with drum MIDI and control Logic Pro from the command line.",
+        version: "0.2.0",
+        subcommands: [MIDICommands.self, Logic.self, EZdrummer.self]
     )
 }

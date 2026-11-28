@@ -1,0 +1,491 @@
+{
+  "version": 1,
+  "title": "artemis",
+  "pal": "69 bpm · A8 B16 C16 D8",
+  "drumMap": {
+    "extends": "ezdrummer",
+    "articulations": { "tom-41": 41, "tom-45": 45, "tom-47": 47, "tom-48": 48 },
+    "voices": { "toms": ["floor-tom-1-center", "tom-41", "tom-45", "tom-47", "tom-48"] }
+  },
+  "sections": [
+    {
+      "id": "A",
+      "name": "intro",
+      "parts": [
+        {
+          "bar": 1,
+          "bars": 2,
+          "name": "grv a",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) S(3)<", "P4 A↓ O(2,3,4) U(2)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "floor-tom-1-center"],
+              "velocity": 98,
+              "gus": "P4 A↓ O(3) U(3,4)"
+            },
+            {
+              "articulation": [
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip"
+              ],
+              "velocity": [112, 87, 110, 87, 87, 110, 87],
+              "gus": "P8 A↔ O(5)"
+            }
+          ]
+        },
+        {
+          "bar": 3,
+          "bars": 2,
+          "name": "grv b",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(2,4) S(3)<" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "floor-tom-1-center"],
+              "velocity": 98,
+              "gus": "P4 A↓ O(3) U(3,4)"
+            },
+            {
+              "articulation": [
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip"
+              ],
+              "velocity": [112, 87, 110, 87, 87, 110, 87],
+              "gus": "P8 A↔ O(5)"
+            }
+          ]
+        },
+        { "bar": 5, "bars": 2, "name": "grv b", "use": "03 grv b" },
+        {
+          "bar": 7,
+          "bars": 1,
+          "name": "grv d",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(2,4) S(3)<" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "floor-tom-1-center"],
+              "velocity": 98,
+              "gus": "P4 A↓ O(3) U(3,4)"
+            },
+            {
+              "articulation": [
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-tip",
+                "hi-hat-tight-edge",
+                "hi-hat-tight-tip"
+              ],
+              "velocity": [112, 87, 110, 87, 87, 110, 87],
+              "gus": "P8 A↔ O(5)"
+            }
+          ]
+        },
+        {
+          "bar": 8,
+          "bars": 1,
+          "name": "fill a",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ S(3)<> N(1)<" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4) U(1)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "floor-tom-1-center", "tom-41"],
+              "velocity": 98,
+              "gus": "P4 A↓ O(3) S(2)> N(4)> U(3,4)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "name": "verse",
+      "parts": [
+        {
+          "bar": 1,
+          "bars": 4,
+          "name": "grv a",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) S(3)<", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" }
+          ]
+        },
+        {
+          "bar": 5,
+          "bars": 3,
+          "name": "grv b",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) S(3)<", "P4 A↓ O(4) S(3)< N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": ["P4 A↔ O(1,2,4)", "P4 A↔ O(1,3)"]
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": ["P8 A↔", "P8 A↔ O(6)"] }
+          ]
+        },
+        {
+          "bar": 8,
+          "bars": 1,
+          "name": "fill a",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(4) S(2)< N(1,3)< U(1)" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 O(3) S(1)> S(4)< N(2)> U(3)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "tom-41"],
+              "velocity": 98,
+              "gus": "P4 O(1,2,3) N(4)> U(4)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P4 A↔ O(4) U(1)" }
+          ]
+        },
+        {
+          "bar": 9,
+          "bars": 4,
+          "name": "grv c",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(4) S(3)< N(2)> U(3,4)", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,3)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" }
+          ]
+        },
+        {
+          "bar": 13,
+          "bars": 2,
+          "name": "grv d",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) N(3)<", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": ["P4 A↔ O(1,2,4)", "P4 A↔ O(1,2,4) U(4)"]
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" }
+          ]
+        },
+        {
+          "bar": 15,
+          "bars": 1,
+          "name": "pickup",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(2) S(3)< S(4)>" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,3)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" }
+          ]
+        },
+        {
+          "bar": 16,
+          "bars": 1,
+          "name": "fill b",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(4) S(2)< N(1,3)< U(1)" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 O(3) S(1)> S(4)< N(2)> U(3)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "tom-41"],
+              "velocity": 98,
+              "gus": "P4 O(1,2,3) N(4)> U(4)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P4 A↔ O(4) U(1)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "name": "chorus",
+      "parts": [
+        {
+          "bar": 1,
+          "bars": 4,
+          "name": "grv a",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) S(3)<", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": ["P4 A↔ O(1,2,4)", "P4 A↔ O(1,3)"]
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" },
+            {
+              "articulation": "crash-1",
+              "velocity": 112,
+              "gus": ["P4 O(2,3,4)", "P4 O(1,2,3,4)", "P4 O(1,2,3,4)", "P4 O(1,2,3,4)"]
+            }
+          ]
+        },
+        {
+          "bar": 5,
+          "bars": 3,
+          "name": "grv b",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(4) S(3)<", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,3)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" },
+            {
+              "articulation": "crash-1",
+              "velocity": 112,
+              "gus": ["P4 O(2,3,4)", "P4 O(1,2,3,4)", "P4 O(1,2,3,4)"]
+            }
+          ]
+        },
+        {
+          "bar": 8,
+          "bars": 1,
+          "name": "fill a",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P8 A↓ O(3,5,7,8) N(1)< N(2,4)>" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 O(1) N(2,3)>"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔ O(7,8)" }
+          ]
+        },
+        {
+          "bar": 9,
+          "bars": 2,
+          "name": "grv c",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) S(3)<", "P4 A↓ S(3)< S(4)> N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": ["P4 A↔ O(1,2,4)", "P4 A↔ O(1,3)"]
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" },
+            { "articulation": "crash-1", "velocity": 112, "gus": ["P4 O(2,3,4)", "P4 O(1,2,3,4)"] }
+          ]
+        },
+        {
+          "bar": 11,
+          "bars": 2,
+          "name": "grv d",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,4) N(3)< U(3)", "P4 A↓ S(3)< S(4)> N(1)< N(2)> U(3)"]
+            },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": ["P4 A↔ O(1,2) S(4)>", "P4 A↔ O(1,3)"]
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔" }
+          ]
+        },
+        { "bar": 13, "bars": 2, "name": "grv d", "use": "11 grv d" },
+        {
+          "bar": 15,
+          "bars": 1,
+          "name": "pickup",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ O(2) S(3)< S(4)> N(1)<" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,3)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P8 A↔ O(7,8)" }
+          ]
+        },
+        {
+          "bar": 16,
+          "bars": 1,
+          "name": "fill b",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": "P4 A↓ S(3)<> N(1)<" },
+            {
+              "articulation": "snare-center",
+              "velocity": 122,
+              "accent": true,
+              "flam": { "offset": 0.0625, "velocity": 44, "duration": 0.025 },
+              "gus": "P4 A↔ O(1,2,4) U(1)"
+            },
+            {
+              "articulation": ["tom-48", "tom-47", "tom-45", "floor-tom-1-center", "floor-tom-1-center", "tom-41"],
+              "velocity": 98,
+              "gus": "P4 A↓ O(3) S(2)> N(4)> U(3,4)"
+            },
+            { "articulation": "hi-hat-tight-tip", "velocity": [112, 87], "gus": "P4 A↔ O(4)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "name": "ending",
+      "parts": [
+        {
+          "bar": 1,
+          "bars": 3,
+          "name": "res a",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2) S(3)< S(4)>", "P4 O(1,2,3,4)"]
+            },
+            {
+              "articulation": "crash-1",
+              "velocity": 112,
+              "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2,3)", "P4 O(1,2,3,4)"]
+            }
+          ]
+        },
+        {
+          "bar": 4,
+          "bars": 3,
+          "name": "res b",
+          "voices": [
+            {
+              "articulation": "kick",
+              "velocity": 115,
+              "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2,4) S(3)<", "P4 O(1,2,3,4)"]
+            },
+            {
+              "articulation": "crash-1",
+              "velocity": 112,
+              "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2,3)", "P4 O(1,2,3,4)"]
+            }
+          ]
+        },
+        {
+          "bar": 7,
+          "bars": 2,
+          "name": "final",
+          "voices": [
+            { "articulation": "kick", "velocity": 115, "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2,3,4)"] },
+            {
+              "articulation": "crash-1",
+              "velocity": 120,
+              "duration": 1,
+              "gus": ["P4 A↓ O(2,3,4)", "P4 O(1,2,3,4)"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
